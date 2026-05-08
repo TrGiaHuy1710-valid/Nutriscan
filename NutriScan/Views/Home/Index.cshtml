@@ -1,0 +1,85 @@
+﻿<link rel="stylesheet" href="~/css/app.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+<div class="mobile-container">
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="logo-left">
+            <div class="logo-dot">
+                <i class="fa-solid fa-brain"></i>
+            </div>
+            <span>VITALIS AI</span>
+        </div>
+        <div class="setting-btn">
+            <i class="fa-solid fa-gear"></i>
+        </div>
+    </div>
+
+    <!-- MAIN CIRCLE -->
+    <div class="circle-wrapper">
+        <div class="circle">
+            <div class="circle-content">
+                <h1>98%</h1>
+                <p>SYSTEM VITALITY</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- DAILY SYNTHESIS -->
+    <div class="section-title">
+        <h2>Daily Synthesis</h2>
+        <span>Target: 2400 kcal</span>
+    </div>
+
+    <div class="card">
+        <div class="progress-item">
+            <div class="progress-header">
+                <span>PROTEIN</span>
+                <span>95g / 160g</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill blue"></div>
+            </div>
+        </div>
+
+        <div class="progress-item">
+            <div class="progress-header">
+                <span>CARBS</span>
+                <span>200g / 250g</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill purple"></div>
+            </div>
+        </div>
+
+        <div class="progress-item">
+            <div class="progress-header">
+                <span>FATS</span>
+                <span>48g / 65g</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill cyan"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEURAL INSIGHT -->
+    <div class="card">
+        <div class="insight">
+            <div class="insight-icon">
+                <i class="fa-solid fa-brain"></i>
+            </div>
+            <div>
+                <h3>Neural Insight</h3>
+                <p>
+                    Your cellular regeneration rate is optimal today.<br>
+                    Consider a 20-minute restorative sequence tonight.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    @Html.Partial("_BottomNav")
+
+</div>
