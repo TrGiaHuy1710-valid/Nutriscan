@@ -21,7 +21,6 @@ D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\rjsmcshtml.dswa.cache.json
 D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\scopedcss\Views\Shared\_Layout.cshtml.rz.scp.css
 D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\scopedcss\bundle\NutriScan.styles.css
 D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\scopedcss\projectbundle\NutriScan.bundle.scp.css
-D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\compressed\7qn62c8u8x-{0}-dfpgi81fel-dfpgi81fel.gz
 D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\compressed\jqw1gy815b-{0}-b9sayid5wm-b9sayid5wm.gz
 D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\compressed\ij6y8njpwt-{0}-61n19gt1b8-61n19gt1b8.gz
 D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\compressed\5yjriswer8-{0}-xtxxf3hu2r-xtxxf3hu2r.gz
@@ -96,3 +95,5 @@ D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\refint\NutriScan.dll
 D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\NutriScan.pdb
 D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\NutriScan.genruntimeconfig.cache
 D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\ref\NutriScan.dll
+D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\NutriScan.sourcelink.json
+D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\compressed\7qn62c8u8x-{0}-tghastrsbd-tghastrsbd.gz
