@@ -1,27 +1,45 @@
 <div class="bottom-nav">
 
-    <a asp-controller="Home" asp-action="Index" class="nav-item active">
+    <a asp-controller="Home"
+       asp-action="Index"
+       class="nav-item active">
+
         <i class="fa-solid fa-house"></i>
         Home
+
     </a>
 
-    <a asp-controller="Home" asp-action="Nutrition" class="nav-item">
+    <a asp-controller="Home"
+       asp-action="Nutrition"
+       class="nav-item">
+
         <i class="fa-solid fa-utensils"></i>
         Food
+
     </a>
 
-    <a asp-controller="Home" asp-action="QRScan" class="qr-button">
-        <i class="fa-solid fa-qrcode"></i>
-    </a>
+    <!-- QR BUTTON -->
 
-    <a asp-controller="Home" asp-action="AI" class="nav-item">
+    <a href="/Home/QRScan" class="qr-button">
+    <i class="fa-solid fa-qrcode"></i>
+</a>
+
+    <a asp-controller="Home"
+       asp-action="AI"
+       class="nav-item">
+
         <i class="fa-solid fa-brain"></i>
         AI
+
     </a>
 
-    <a asp-controller="Home" asp-action="Workout" class="nav-item">
+    <a asp-controller="Home"
+       asp-action="Workout"
+       class="nav-item">
+
         <i class="fa-solid fa-dumbbell"></i>
         Workout
+
     </a>
 
 </div>
