@@ -1,8 +1,12 @@
+@{
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+}
+
 <div class="bottom-nav">
 
     <a asp-controller="Home"
        asp-action="Index"
-       class="nav-item active">
+       class="nav-item @(currentAction == "Index" ? "active" : "")">
 
         <i class="fa-solid fa-house"></i>
         Home
@@ -11,7 +15,7 @@
 
     <a asp-controller="Home"
        asp-action="Nutrition"
-       class="nav-item">
+       class="nav-item @(currentAction == "Nutrition" ? "active" : "")">
 
         <i class="fa-solid fa-utensils"></i>
         Food
@@ -20,13 +24,17 @@
 
     <!-- QR BUTTON -->
 
-    <a href="/Home/QRScan" class="qr-button">
-    <i class="fa-solid fa-qrcode"></i>
-</a>
+    <a asp-controller="Home"
+       asp-action="QRScan"
+       class="qr-button @(currentAction == "QRScan" ? "active-qr" : "")">
+
+        <i class="fa-solid fa-qrcode"></i>
+
+    </a>
 
     <a asp-controller="Home"
        asp-action="AI"
-       class="nav-item">
+       class="nav-item @(currentAction == "AI" ? "active" : "")">
 
         <i class="fa-solid fa-brain"></i>
         AI
@@ -35,7 +43,7 @@
 
     <a asp-controller="Home"
        asp-action="Workout"
-       class="nav-item">
+       class="nav-item @(currentAction == "Workout" ? "active" : "")">
 
         <i class="fa-solid fa-dumbbell"></i>
         Workout

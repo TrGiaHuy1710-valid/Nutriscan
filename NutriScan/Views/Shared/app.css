@@ -1,0 +1,12 @@
+.card {
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.workout-image {
+    width: 100%;
+    height: 320px;
+    object-fit: cover;
+    display: block;
+}

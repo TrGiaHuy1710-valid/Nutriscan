@@ -83,8 +83,6 @@ D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\compressed\w5t6gn2rke-{0}-2z0ns9
 D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\compressed\frki0u5zme-{0}-muycvpuwrr-muycvpuwrr.gz
 D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\compressed\90s3r8i76f-{0}-87fc7y1x7t-87fc7y1x7t.gz
 D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\compressed\enmao6jb6a-{0}-mlv21k5csn-mlv21k5csn.gz
-D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\compressed\tcewgr8pvm-{0}-2a5k8pmnij-2a5k8pmnij.gz
-D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\compressed\9vvbh2a5qf-{0}-2a5k8pmnij-2a5k8pmnij.gz
 D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\staticwebassets.build.json
 D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\staticwebassets.build.json.cache
 D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\staticwebassets.development.json
@@ -96,4 +94,6 @@ D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\NutriScan.pdb
 D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\NutriScan.genruntimeconfig.cache
 D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\ref\NutriScan.dll
 D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\NutriScan.sourcelink.json
-D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\compressed\7qn62c8u8x-{0}-tghastrsbd-tghastrsbd.gz
+D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\compressed\7qn62c8u8x-{0}-2x7fd0woav-2x7fd0woav.gz
+D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\compressed\tcewgr8pvm-{0}-2a5k8pmnij-2a5k8pmnij.gz
+D:\Github\Nutriscan\NutriScan\obj\Debug\net10.0\compressed\9vvbh2a5qf-{0}-2a5k8pmnij-2a5k8pmnij.gz
