@@ -1,0 +1,161 @@
+@{
+    ViewData["Title"] = "Trợ lý AI";
+}
+
+<div class="app-container" style="display: flex; flex-direction: column; height: 100vh;">
+    <!-- Header -->
+    <header class="page-header" style="flex-shrink: 0;">
+        <a asp-controller="Home" asp-action="Index" class="page-header__back">
+            <i class="fa-solid fa-angle-left"></i>
+        </a>
+        <h1 class="page-header__title">Trợ lý dinh dưỡng AI</h1>
+    </header>
+
+    <!-- Chat Area -->
+    <div style="flex: 1; overflow-y: auto; padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3);" id="chatBox">
+        
+        <!-- Bot Message -->
+        <div style="display: flex; gap: var(--space-2); max-width: 85%;">
+            <div style="width: 32px; height: 32px; border-radius: var(--radius-full); background: rgba(16, 185, 129, 0.15); display: flex; align-items: center; justify-content: center; color: var(--color-primary); flex-shrink: 0;">
+                <i class="fa-solid fa-robot" style="font-size: 14px;"></i>
+            </div>
+            <div style="background: var(--color-surface); padding: var(--space-3); border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md); font-size: var(--font-size-sm); color: white; line-height: 1.5;">
+                Xin chào! Tôi là Trợ lý dinh dưỡng AI của bạn. Bạn cần tư vấn về chế độ ăn uống, tập luyện hay cách chọn thực phẩm lành mạnh hôm nay?
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Loading indicator (Subtle dot typing) -->
+    <div id="typingIndicator" style="display: none; padding: 0 var(--space-4) var(--space-2) 50px; flex-shrink: 0;">
+        <div style="display: flex; gap: 4px; align-items: center; background: var(--color-surface); padding: 8px 12px; border-radius: var(--radius-full); width: fit-content;">
+            <span class="dot-blink" style="width: 6px; height: 6px; background: var(--color-text-secondary); border-radius: 50%;"></span>
+            <span class="dot-blink" style="width: 6px; height: 6px; background: var(--color-text-secondary); border-radius: 50%; animation-delay: 0.2s;"></span>
+            <span class="dot-blink" style="width: 6px; height: 6px; background: var(--color-text-secondary); border-radius: 50%; animation-delay: 0.4s;"></span>
+        </div>
+    </div>
+
+    <!-- Input Bar -->
+    <div style="padding: var(--space-3); background: var(--color-surface); border-top: 1px solid var(--color-border-light); display: flex; gap: var(--space-2); align-items: center; flex-shrink: 0;">
+        <input type="text" id="chatInput" class="form-input" placeholder="Hỏi tôi về calo, đạm hoặc giảm cân..." style="margin-bottom: 0;" onkeypress="handleKeyPress(event)" />
+        <button class="btn btn--primary" style="height: 42px; width: 42px; padding: 0; border-radius: var(--radius-md); flex-shrink: 0;" onclick="sendMessage()">
+            <i class="fa-solid fa-paper-plane"></i>
+        </button>
+    </div>
+
+    <div style="height: 70px; flex-shrink: 0; background: var(--color-bg);"></div>
+    <partial name="_BottomNav" />
+</div>
+
+<script>
+    const chatBox = document.getElementById('chatBox');
+    const chatInput = document.getElementById('chatInput');
+    const typingIndicator = document.getElementById('typingIndicator');
+
+    const botResponses = [
+        {
+            keywords: ["calo", "nạp", "bao nhiêu", "target"],
+            response: "Lượng calo cần nạp mỗi ngày phụ thuộc vào mục tiêu của bạn (giảm cân/tăng cân) và mức độ hoạt động thể chất. Bạn có thể cài đặt chính xác các thông số này trong phần **Cá nhân** để hệ thống tính toán tự động dựa trên công thức chuẩn BMR & TDEE nhé!"
+        },
+        {
+            keywords: ["đạm", "protein", "cơ bắp", "bổ sung"],
+            response: "Để phát triển cơ bắp hoặc giữ cơ khi giảm cân, bạn nên nạp khoảng 1.5g đến 2.2g Protein trên mỗi kg trọng lượng cơ thể. Các nguồn đạm dồi dào bao gồm: ức gà, trứng, thịt bò, cá thu và các loại hạt."
+        },
+        {
+            keywords: ["giảm cân", "béo", "giảm mỡ"],
+            response: "Nguyên tắc cốt lõi của giảm cân là **Thâm hụt calo** (nạp ít calo hơn lượng tiêu hao). Bạn nên thâm hụt khoảng 300 - 500 kcal mỗi ngày, kết hợp tập các bài tập Cardio (đốt calo) và tập sức mạnh (Strength) để giữ cơ bắp săn chắc."
+        },
+        {
+            keywords: ["tập luyện", "bài tập", "workout"],
+            response: "Tôi đề xuất bạn thực hiện các bài tập kết hợp. Nếu bạn muốn giảm cân, hãy tham khảo tab **Tập luyện** để chạy các bài tập Cardio có tích hợp bộ đếm giờ (Timer). Nếu muốn tăng cân, hãy chọn bài tập sức mạnh Strength như chống đẩy hoặc squats."
+        },
+        {
+            keywords: ["quét", "ocr", "nhãn"],
+            response: "Bạn chỉ cần nhấn vào tab **Quét nhãn**, chụp ảnh bảng thành phần dinh dưỡng phía sau vỏ hộp hoặc tải ảnh lên. AI sẽ tự động phân tích và trích xuất chỉ số Calo, Carb, Protein và Fat rồi lưu lại trong ngày cho bạn."
+        }
+    ];
+
+    const fallbackResponse = "Tôi hiểu ý bạn. Là một trợ lý dinh dưỡng, tôi khuyên bạn nên theo dõi sát sao lượng calo nạp vào hàng ngày thông qua công cụ quét OCR và thực hiện đều đặn các bài tập được khuyến nghị trong ứng dụng nhé!";
+
+    function handleKeyPress(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    function sendMessage() {
+        const text = chatInput.value.trim();
+        if (!text) return;
+
+        // User Message
+        appendMessage('user', text);
+        chatInput.value = '';
+
+        // Auto scroll
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // Show typing
+        typingIndicator.style.display = 'block';
+
+        // Simulate thinking time
+        setTimeout(() => {
+            typingIndicator.style.display = 'none';
+            
+            // Search answer
+            let responseText = "";
+            const lowerText = text.toLowerCase();
+            
+            const matched = botResponses.find(item => 
+                item.keywords.some(keyword => lowerText.includes(keyword))
+            );
+
+            if (matched) {
+                responseText = matched.response;
+            } else {
+                responseText = fallbackResponse;
+            }
+
+            appendMessage('bot', responseText);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }, 1200);
+    }
+
+    function appendMessage(sender, text) {
+        const messageRow = document.createElement('div');
+        messageRow.style.display = 'flex';
+        messageRow.style.gap = 'var(--space-2)';
+        messageRow.style.maxWidth = '85%';
+        
+        if (sender === 'user') {
+            messageRow.style.alignSelf = 'flex-end';
+            messageRow.innerHTML = `
+                <div style="background: var(--color-primary); padding: var(--space-3); border-radius: var(--radius-md) 0 var(--radius-md) var(--radius-md); font-size: var(--font-size-sm); color: white; line-height: 1.5;">
+                    ${text}
+                </div>
+            `;
+        } else {
+            messageRow.style.alignSelf = 'flex-start';
+            messageRow.innerHTML = `
+                <div style="width: 32px; height: 32px; border-radius: var(--radius-full); background: rgba(16, 185, 129, 0.15); display: flex; align-items: center; justify-content: center; color: var(--color-primary); flex-shrink: 0;">
+                    <i class="fa-solid fa-robot" style="font-size: 14px;"></i>
+                </div>
+                <div style="background: var(--color-surface); padding: var(--space-3); border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md); font-size: var(--font-size-sm); color: white; line-height: 1.5;">
+                    ${text}
+                </div>
+            `;
+        }
+
+        chatBox.appendChild(messageRow);
+    }
+</script>
+
+<style>
+    .dot-blink {
+        animation: blink 1.4s infinite both;
+    }
+    @@keyframes blink {
+        0% { opacity: .2; }
+        20% { opacity: 1; }
+        100% { opacity: .2; }
+    }
+</style>

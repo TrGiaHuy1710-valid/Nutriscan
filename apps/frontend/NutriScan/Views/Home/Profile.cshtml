@@ -1,0 +1,266 @@
+@model NutriScan.Data.UserProfile
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân";
+}
+
+<div class="app-container">
+    <!-- Header -->
+    <header class="page-header">
+        <a asp-controller="Home" asp-action="Index" class="page-header__back">
+            <i class="fa-solid fa-angle-left"></i>
+        </a>
+        <h1 class="page-header__title">Hồ sơ & Mục tiêu</h1>
+    </header>
+
+    <div class="page-content" style="display: flex; flex-direction: column; gap: var(--space-4);">
+        
+        <!-- Live Calculations Card -->
+        <div class="card card--primary" style="padding: var(--space-5); text-align: center;">
+            <h3 class="text-sm uppercase font-bold" style="color: rgba(255,255,255,0.8); margin-bottom: var(--space-3); letter-spacing: 0.1em;">Dự toán dinh dưỡng hàng ngày</h3>
+            
+            <div class="text-3xl font-bold" style="color: white; margin-bottom: var(--space-1);">
+                <span id="previewCalories">--</span> <span class="text-sm font-normal" style="color: rgba(255,255,255,0.8);">kcal / ngày</span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-4);">
+                <div style="background: rgba(255,255,255,0.08); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);">
+                    <div class="text-xs" style="color: rgba(255,255,255,0.7);">Chỉ số BMR</div>
+                    <div class="text-md font-bold" id="previewBmr" style="color: white;">-- kcal</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.08); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);">
+                    <div class="text-xs" style="color: rgba(255,255,255,0.7);">Chỉ số TDEE</div>
+                    <div class="text-md font-bold" id="previewTdee" style="color: white;">-- kcal</div>
+                </div>
+            </div>
+
+            <!-- Preview Macros Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-2); margin-top: var(--space-3);">
+                <div style="background: var(--color-protein-bg); padding: var(--space-2); border-radius: var(--radius-sm); text-align: center;">
+                    <div class="text-xs font-semibold" style="color: #3B82F6; text-transform: uppercase;">Đạm</div>
+                    <div class="text-sm font-bold" id="previewProtein" style="color: white;">--g</div>
+                </div>
+                <div style="background: var(--color-carbs-bg); padding: var(--space-2); border-radius: var(--radius-sm); text-align: center;">
+                    <div class="text-xs font-semibold" style="color: #F97316; text-transform: uppercase;">Carb</div>
+                    <div class="text-sm font-bold" id="previewCarbs" style="color: white;">--g</div>
+                </div>
+                <div style="background: var(--color-fat-bg); padding: var(--space-2); border-radius: var(--radius-sm); text-align: center;">
+                    <div class="text-xs font-semibold" style="color: #EF4444; text-transform: uppercase;">Béo</div>
+                    <div class="text-sm font-bold" id="previewFat" style="color: white;">--g</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Setup Card -->
+        <div class="card">
+            <form id="profileForm" oninput="calculateLivePreview()">
+                
+                <!-- Name -->
+                <div class="form-group">
+                    <label class="form-label" for="nameInput">Tên người dùng</label>
+                    <input type="text" id="nameInput" class="form-input" value="@Model.Name" required />
+                </div>
+
+                <!-- Age, Gender -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+                    <div class="form-group">
+                        <label class="form-label" for="ageInput">Tuổi</label>
+                        <input type="number" id="ageInput" class="form-input" value="@Model.Age" min="10" max="100" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="genderInput">Giới tính</label>
+                        <select id="genderInput" class="form-input form-select">
+                            @if (Model.Gender == "Nam") {
+                                <option value="Nam" selected>Nam</option>
+                                <option value="Nữ">Nữ</option>
+                            } else {
+                                <option value="Nam">Nam</option>
+                                <option value="Nữ" selected>Nữ</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Height, Weight -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+                    <div class="form-group">
+                        <label class="form-label" for="heightInput">Chiều cao (cm)</label>
+                        <input type="number" id="heightInput" class="form-input" value="@Model.Height" min="100" max="250" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="weightInput">Cân nặng (kg)</label>
+                        <input type="number" id="weightInput" class="form-input" value="@Model.CurrentWeight" min="30" max="200" required />
+                    </div>
+                </div>
+
+                <!-- Target Weight -->
+                <div class="form-group">
+                    <label class="form-label" for="targetWeightInput">Cân nặng mục tiêu (kg)</label>
+                    <input type="number" id="targetWeightInput" class="form-input" value="@Model.TargetWeight" min="30" max="200" required />
+                </div>
+
+                <!-- Activity Level -->
+                <div class="form-group">
+                    <label class="form-label" for="activityLevelInput">Mức độ vận động</label>
+                    <select id="activityLevelInput" class="form-input form-select">
+                        @{
+                            var actLvl = Model.ActivityLevel ?? "Moderate";
+                        }
+                        @if (actLvl == "Sedentary") { <option value="Sedentary" selected>Ít vận động (Nhân viên văn phòng)</option> } else { <option value="Sedentary">Ít vận động (Nhân viên văn phòng)</option> }
+                        @if (actLvl == "Light") { <option value="Light" selected>Vận động nhẹ (Tập thể thao 1-3 ngày/tuần)</option> } else { <option value="Light">Vận động nhẹ (Tập thể thao 1-3 ngày/tuần)</option> }
+                        @if (actLvl == "Moderate") { <option value="Moderate" selected>Vận động vừa (Tập thể thao 3-5 ngày/tuần)</option> } else { <option value="Moderate">Vận động vừa (Tập thể thao 3-5 ngày/tuần)</option> }
+                        @if (actLvl == "Active") { <option value="Active" selected>Vận động nhiều (Tập thể thao 6-7 ngày/tuần)</option> } else { <option value="Active">Vận động nhiều (Tập thể thao 6-7 ngày/tuần)</option> }
+                        @if (actLvl == "VeryActive") { <option value="VeryActive" selected>Rất năng động (Lao động nặng/Vận động viên)</option> } else { <option value="VeryActive">Rất năng động (Lao động nặng/Vận động viên)</option> }
+                    </select>
+                </div>
+
+                <!-- Goal Type -->
+                <div class="form-group">
+                    <label class="form-label" for="goalTypeInput">Mục tiêu cân nặng</label>
+                    <select id="goalTypeInput" class="form-input form-select">
+                        @{
+                            var goalType = Model.GoalType ?? "Maintain";
+                        }
+                        @if (goalType == "Lose") { <option value="Lose" selected>Giảm cân lành mạnh</option> } else { <option value="Lose">Giảm cân lành mạnh</option> }
+                        @if (goalType == "Maintain") { <option value="Maintain" selected>Duy trì cân nặng</option> } else { <option value="Maintain">Duy trì cân nặng</option> }
+                        @if (goalType == "Gain") { <option value="Gain" selected>Tăng cân cơ bắp</option> } else { <option value="Gain">Tăng cân cơ bắp</option> }
+                    </select>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="btnSaveProfile" class="btn btn--primary btn--block btn--lg" style="margin-top: var(--space-2);">
+                    <i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Success Toast (Subtle) -->
+    <div id="toastSuccess" style="display: none; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); 
+                               background: var(--color-success); color: white; padding: var(--space-2) var(--space-5); 
+                               border-radius: var(--radius-full); font-weight: 600; font-size: var(--font-size-sm); 
+                               box-shadow: var(--shadow-lg); z-index: var(--z-toast); align-items: center; gap: 8px;">
+        <i class="fa-solid fa-circle-check"></i> Đã cập nhật hồ sơ thành công!
+    </div>
+
+    <partial name="_BottomNav" />
+</div>
+
+<script>
+    // Live calculations on form input (match C# NutritionCalculatorService logic)
+    function calculateLivePreview() {
+        const age = parseInt(document.getElementById('ageInput').value) || 25;
+        const gender = document.getElementById('genderInput').value;
+        const height = parseFloat(document.getElementById('heightInput').value) || 170;
+        const weight = parseFloat(document.getElementById('weightInput').value) || 70;
+        const activity = document.getElementById('activityLevelInput').value;
+        const goal = document.getElementById('goalTypeInput').value;
+
+        // 1. BMR
+        let bmr = 0;
+        if (gender === "Nam") {
+            bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5;
+        } else {
+            bmr = (10 * weight) + (6.25 * height) - (5 * age) - 161;
+        }
+
+        // 2. TDEE
+        let multiplier = 1.55;
+        switch (activity) {
+            case "Sedentary": multiplier = 1.2; break;
+            case "Light": multiplier = 1.375; break;
+            case "Moderate": multiplier = 1.55; break;
+            case "Active": multiplier = 1.725; break;
+            case "VeryActive": multiplier = 1.9; break;
+        }
+        const tdee = bmr * multiplier;
+
+        // 3. Calorie Target
+        let calorieTarget = tdee;
+        if (goal === "Lose") {
+            calorieTarget = tdee - 500;
+        } else if (goal === "Gain") {
+            calorieTarget = tdee + 350;
+        }
+
+        const floorLimit = gender === "Nam" ? 1500 : 1200;
+        if (calorieTarget < floorLimit) {
+            calorieTarget = floorLimit;
+        }
+
+        // 4. Macro Targets
+        let proteinPct = 0.25;
+        let carbPct = 0.50;
+        let fatPct = 0.25;
+
+        if (goal === "Lose") {
+            proteinPct = 0.30;
+            carbPct = 0.40;
+            fatPct = 0.30;
+        } else if (goal === "Gain") {
+            proteinPct = 0.30;
+            carbPct = 0.45;
+            fatPct = 0.25;
+        }
+
+        const protein = (calorieTarget * proteinPct) / 4;
+        const carbs = (calorieTarget * carbPct) / 4;
+        const fat = (calorieTarget * fatPct) / 9;
+
+        // Update view previews
+        document.getElementById('previewCalories').textContent = Math.round(calorieTarget);
+        document.getElementById('previewBmr').textContent = `${Math.round(bmr)} kcal`;
+        document.getElementById('previewTdee').textContent = `${Math.round(tdee)} kcal`;
+        document.getElementById('previewProtein').textContent = `${Math.round(protein)}g`;
+        document.getElementById('previewCarbs').textContent = `${Math.round(carbs)}g`;
+        document.getElementById('previewFat').textContent = `${Math.round(fat)}g`;
+    }
+
+    // Submit handler
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const updatedProfile = {
+            name: document.getElementById('nameInput').value,
+            age: parseInt(document.getElementById('ageInput').value),
+            gender: document.getElementById('genderInput').value,
+            height: parseFloat(document.getElementById('heightInput').value),
+            currentWeight: parseFloat(document.getElementById('weightInput').value),
+            targetWeight: parseFloat(document.getElementById('targetWeightInput').value),
+            activityLevel: document.getElementById('activityLevelInput').value,
+            goalType: document.getElementById('goalTypeInput').value
+        };
+
+        try {
+            const btn = document.getElementById('btnSaveProfile');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+
+            const response = await fetch('/api/profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedProfile)
+            });
+
+            if (response.ok) {
+                // Show Success Toast
+                const toast = document.getElementById('toastSuccess');
+                toast.style.display = 'flex';
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 3000);
+            } else {
+                alert('Có lỗi xảy ra khi lưu hồ sơ.');
+            }
+        } catch (err) {
+            console.error('Submit error:', err);
+            alert('Không thể kết nối đến máy chủ.');
+        } finally {
+            const btn = document.getElementById('btnSaveProfile');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi';
+        }
+    });
+
+    // Run preview once on load
+    window.addEventListener('load', calculateLivePreview);
+</script>

@@ -1,0 +1,133 @@
+<nav class="bottom-nav" id="bottomNav">
+    <a href="/Home/Index" class="nav-item" id="nav-home">
+        <i class="fa-solid fa-house nav-icon"></i>
+        <span class="nav-label">Trang chủ</span>
+    </a>
+    <a href="/Home/Nutrition" class="nav-item" id="nav-nutrition">
+        <i class="fa-solid fa-camera nav-icon"></i>
+        <span class="nav-label">Quét</span>
+    </a>
+    <a href="/Home/Workout" class="nav-item" id="nav-workout">
+        <i class="fa-solid fa-dumbbell nav-icon"></i>
+        <span class="nav-label">Luyện tập</span>
+    </a>
+    <a href="/Home/Stats" class="nav-item" id="nav-stats">
+        <i class="fa-solid fa-chart-line nav-icon"></i>
+        <span class="nav-label">Thống kê</span>
+    </a>
+    <a href="/Home/Profile" class="nav-item" id="nav-profile">
+        <i class="fa-solid fa-user nav-icon"></i>
+        <span class="nav-label">Hồ sơ</span>
+    </a>
+</nav>
+
+<style>
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    height: 68px;
+    background: rgba(21, 31, 50, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 10px 4px 8px;
+    text-decoration: none;
+    color: #64748B;
+    transition: color 200ms ease, transform 150ms ease;
+    position: relative;
+    cursor: pointer;
+}
+
+.nav-item:hover {
+    color: #94A3B8;
+}
+
+.nav-item.active {
+    color: #10B981;
+}
+
+.nav-item.active .nav-icon {
+    transform: translateY(-2px);
+}
+
+.nav-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 2px;
+    background: #10B981;
+    border-radius: 0 0 4px 4px;
+    transition: width 200ms ease;
+}
+
+.nav-item.active::before {
+    width: 24px;
+}
+
+.nav-icon {
+    font-size: 18px;
+    transition: transform 200ms ease;
+}
+
+.nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1;
+}
+</style>
+
+<script>
+    (function() {
+        const path = window.location.pathname.toLowerCase();
+        const navMap = {
+            '/home/index': 'nav-home',
+            '/home/': 'nav-home',
+            '/': 'nav-home',
+            '/home/nutrition': 'nav-nutrition',
+            '/home/workout': 'nav-workout',
+            '/home/stats': 'nav-stats',
+            '/home/profile': 'nav-profile',
+            '/home/history': 'nav-home',
+            '/home/favorites': 'nav-home',
+        };
+
+        let activeId = null;
+        for (const [key, val] of Object.entries(navMap)) {
+            if (path === key || path.startsWith(key + '/')) {
+                activeId = val;
+                break;
+            }
+        }
+        if (!activeId) {
+            // Fallback: match by path segment
+            if (path.includes('nutrition')) activeId = 'nav-nutrition';
+            else if (path.includes('workout')) activeId = 'nav-workout';
+            else if (path.includes('stats')) activeId = 'nav-stats';
+            else if (path.includes('profile')) activeId = 'nav-profile';
+            else activeId = 'nav-home';
+        }
+
+        const el = document.getElementById(activeId);
+        if (el) el.classList.add('active');
+    })();
+</script>

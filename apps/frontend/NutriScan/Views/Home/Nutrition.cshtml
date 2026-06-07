@@ -1,0 +1,414 @@
+@{
+    ViewData["Title"] = "Quét OCR thực phẩm";
+}
+
+<div class="app-container">
+    <!-- Header -->
+    <header class="page-header">
+        <a asp-controller="Home" asp-action="Index" class="page-header__back">
+            <i class="fa-solid fa-angle-left"></i>
+        </a>
+        <h1 class="page-header__title">Quét bảng thành phần</h1>
+    </header>
+
+    <div class="page-content" style="display: flex; flex-direction: column; gap: var(--space-4);">
+        
+        <!-- Tab Selector (Upload vs Camera) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); background: var(--color-surface); padding: var(--space-1); border-radius: var(--radius-md);">
+            <button onclick="switchTab('upload')" id="tabUploadBtn" class="btn btn--primary btn--sm" style="border-radius: var(--radius-sm);">
+                <i class="fa-solid fa-file-arrow-up" style="margin-right: 4px;"></i> Tải ảnh lên
+            </button>
+            <button onclick="switchTab('camera')" id="tabCameraBtn" class="btn btn--ghost btn--sm" style="border-radius: var(--radius-sm);">
+                <i class="fa-solid fa-camera" style="margin-right: 4px;"></i> Chụp ảnh
+            </button>
+        </div>
+
+        <!-- Upload Tab Content -->
+        <div id="uploadTabContent" style="display: block;">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-area__icon">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                <p class="upload-area__text">Kéo thả ảnh nhãn dinh dưỡng</p>
+                <p class="upload-area__hint">Hỗ trợ các định dạng PNG, JPG, JPEG</p>
+                <input type="file" id="fileInput" class="upload-input" accept="image/*" style="display: none;" />
+            </div>
+        </div>
+
+        <!-- Camera Tab Content -->
+        <div id="cameraTabContent" style="display: none;">
+            <div class="card" style="padding: 0; overflow: hidden; border: 1.5px solid var(--color-border);">
+                <video id="cameraVideo" playsinline style="width: 100%; display: block; transform: scaleX(1); background: #000;"></video>
+                <canvas id="cameraCanvas" style="display: none;"></canvas>
+                
+                <div style="padding: var(--space-3); display: flex; gap: var(--space-3); justify-content: center; background: var(--color-surface);">
+                    <button class="btn btn--primary btn--block" onclick="capturePhoto()">
+                        <i class="fa-solid fa-camera"></i> Chụp ảnh ngay
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Selection -->
+        <div class="card" id="previewContainer" style="display: none; text-align: center;">
+            <img id="previewImage" style="width: 100%; max-height: 250px; object-fit: contain; border-radius: var(--radius-md); margin-bottom: var(--space-4);" />
+            <div style="display: flex; gap: var(--space-3);">
+                <button class="btn btn--outline btn-block" onclick="resetScanner()">Hủy</button>
+                <button class="btn btn--primary btn-block" onclick="analyzeImage()">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Bắt đầu phân tích
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading View -->
+        <div id="loadingView" class="card" style="display: none; text-align: center; padding: var(--space-8) var(--space-5);">
+            <div class="spinner" style="margin: 0 auto var(--space-4);"></div>
+            <h3 class="text-md font-bold" style="margin-bottom: var(--space-1);">Đang quét nhãn dinh dưỡng</h3>
+            <p class="text-sm text-secondary">Hệ thống AI đang nhận diện chữ viết và trích xuất thành phần...</p>
+        </div>
+
+        <!-- OCR Scan Result Card -->
+        <div class="card" id="resultCard" style="display: none;">
+            <h2 class="text-lg font-bold" id="resultTitle" style="margin-bottom: var(--space-1); word-break: break-all;">Tên thực phẩm đã quét</h2>
+            <p class="text-xs text-secondary" style="margin-bottom: var(--space-4);">Đã tự động lưu vào cơ sở dữ liệu</p>
+            <div id="validationPanel" style="display: none; margin-bottom: var(--space-4);">
+                <span id="validationBadge" class="btn btn--outline btn--sm" style="pointer-events: none; width: auto;"></span>
+                <div id="validationWarnings" class="text-xs text-secondary" style="margin-top: var(--space-2); display: flex; flex-direction: column; gap: var(--space-1);"></div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-5);">
+                <!-- Calories -->
+                <div class="nutrient-card nutrient-card--calories">
+                    <div class="nutrient-card__icon nutrient-card__icon--calories">
+                        <i class="fa-solid fa-fire"></i>
+                    </div>
+                    <div class="nutrient-card__value" id="caloriesVal">0</div>
+                    <div class="nutrient-card__label">Calo</div>
+                </div>
+                <!-- Protein -->
+                <div class="nutrient-card nutrient-card--protein">
+                    <div class="nutrient-card__icon nutrient-card__icon--protein">
+                        <i class="fa-solid fa-egg"></i>
+                    </div>
+                    <div class="nutrient-card__value" id="proteinVal">0</div>
+                    <div class="nutrient-card__label">Chất đạm</div>
+                </div>
+                <!-- Carbs -->
+                <div class="nutrient-card nutrient-card--carbs">
+                    <div class="nutrient-card__icon nutrient-card__icon--carbs">
+                        <i class="fa-solid fa-wheat-awn"></i>
+                    </div>
+                    <div class="nutrient-card__value" id="carbsVal">0</div>
+                    <div class="nutrient-card__label">Tinh bột</div>
+                </div>
+                <!-- Fat -->
+                <div class="nutrient-card nutrient-card--fat">
+                    <div class="nutrient-card__icon nutrient-card__icon--fat">
+                        <i class="fa-solid fa-droplet"></i>
+                    </div>
+                    <div class="nutrient-card__value" id="fatVal">0</div>
+                    <div class="nutrient-card__label">Chất béo</div>
+                </div>
+            </div>
+
+            <!-- Notes Section -->
+            <div class="form-group" style="margin-bottom: var(--space-4);">
+                <label class="form-label">Ghi chú sản phẩm</label>
+                <textarea id="notesInput" class="form-input" placeholder="Nhập ghi chú thêm cho món ăn này..." style="resize: none; height: 60px;"></textarea>
+                <button class="btn btn--outline btn--sm" onclick="saveNotes()" style="margin-top: 8px;">
+                    Lưu ghi chú
+                </button>
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+                <button class="btn btn--outline btn--block" id="btnToggleFavorite" onclick="toggleFavoriteResult()">
+                    <i class="fa-regular fa-heart"></i> Yêu thích
+                </button>
+                <button class="btn btn--outline btn--block" onclick="addToComparisonResult()">
+                    <i class="fa-solid fa-code-compare"></i> So sánh
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Success Toast (Subtle) -->
+    <div id="toastScanSuccess" style="display: none; position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); 
+                               background: var(--color-success); color: white; padding: var(--space-2) var(--space-5); 
+                               border-radius: var(--radius-full); font-weight: 600; font-size: var(--font-size-sm); 
+                               box-shadow: var(--shadow-lg); z-index: var(--z-toast); align-items: center; gap: 8px;">
+        <i class="fa-solid fa-circle-check"></i> Đã cập nhật ghi chú thành công!
+    </div>
+
+    <partial name="_BottomNav" />
+</div>
+
+<script src="~/js/api/nutriscan-api.js"></script>
+<script>
+    let currentImageData = null;
+    let cameraStream = null;
+    let currentScanId = null;
+    let isResultFavorite = false;
+
+    // Switch between Upload and Camera tabs
+    function switchTab(tab) {
+        const tabUploadBtn = document.getElementById('tabUploadBtn');
+        const tabCameraBtn = document.getElementById('tabCameraBtn');
+        const uploadContent = document.getElementById('uploadTabContent');
+        const cameraContent = document.getElementById('cameraTabContent');
+
+        if (tab === 'upload') {
+            tabUploadBtn.className = 'btn btn--primary btn--sm';
+            tabCameraBtn.className = 'btn btn--ghost btn--sm';
+            uploadContent.style.display = 'block';
+            cameraContent.style.display = 'none';
+            stopCamera();
+        } else {
+            tabUploadBtn.className = 'btn btn--ghost btn--sm';
+            tabCameraBtn.className = 'btn btn--primary btn--sm';
+            uploadContent.style.display = 'none';
+            cameraContent.style.display = 'block';
+            startCamera();
+        }
+        resetScanner();
+    }
+
+    // File upload handlers
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+            handleSelectedFile(e.dataTransfer.files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleSelectedFile(e.target.files[0]);
+        }
+    });
+
+    function handleSelectedFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            currentImageData = e.target.result;
+            document.getElementById('previewImage').src = currentImageData;
+            
+            // Show preview
+            document.getElementById('uploadTabContent').style.display = 'none';
+            document.getElementById('cameraTabContent').style.display = 'none';
+            document.getElementById('previewContainer').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Camera handlers
+    async function startCamera() {
+        const video = document.getElementById('cameraVideo');
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment' } 
+            });
+            video.srcObject = cameraStream;
+            video.play();
+        } catch (err) {
+            alert('Không thể mở camera: ' + err.message);
+            switchTab('upload');
+        }
+    }
+
+    function stopCamera() {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+    }
+
+    function capturePhoto() {
+        const video = document.getElementById('cameraVideo');
+        const canvas = document.getElementById('cameraCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        currentImageData = canvas.toDataURL('image/jpeg');
+        document.getElementById('previewImage').src = currentImageData;
+
+        stopCamera();
+
+        // Show preview
+        document.getElementById('cameraTabContent').style.display = 'none';
+        document.getElementById('previewContainer').style.display = 'block';
+    }
+
+    function resetScanner() {
+        currentImageData = null;
+        currentScanId = null;
+        isResultFavorite = false;
+        
+        document.getElementById('previewContainer').style.display = 'none';
+        document.getElementById('loadingView').style.display = 'none';
+        document.getElementById('resultCard').style.display = 'none';
+        document.getElementById('notesInput').value = '';
+        
+        // Reset active tab content
+        const activeTab = document.getElementById('tabUploadBtn').classList.contains('btn--primary') ? 'upload' : 'camera';
+        if (activeTab === 'upload') {
+            document.getElementById('uploadTabContent').style.display = 'block';
+        } else {
+            document.getElementById('cameraTabContent').style.display = 'block';
+            if (!cameraStream) startCamera();
+        }
+    }
+
+    // Analyze OCR
+    async function analyzeImage() {
+        if (!currentImageData) return;
+
+        document.getElementById('previewContainer').style.display = 'none';
+        document.getElementById('loadingView').style.display = 'block';
+
+        try {
+            const file = await getCurrentScanFile();
+            const data = await window.NutriScanApi.analyzeScan(file);
+
+            if (data && data.nutrition) {
+                // Read and set results
+                const nutrition = data.nutrition;
+                document.getElementById('caloriesVal').textContent = nutrition.calories || 0;
+                document.getElementById('proteinVal').textContent = (nutrition.protein || 0) + 'g';
+                document.getElementById('carbsVal').textContent = (nutrition.carbs || 0) + 'g';
+                document.getElementById('fatVal').textContent = (nutrition.fat || 0) + 'g';
+                
+                // Get filename or placeholder as product name
+                document.getElementById('resultTitle').textContent = data.product?.name || file.name;
+
+                // Capture database Id injected from backend
+                currentScanId = data.scanId || null;
+                renderValidation(data.validation);
+
+                // Show result card
+                document.getElementById('loadingView').style.display = 'none';
+                document.getElementById('resultCard').style.display = 'block';
+            } else {
+                alert('Không thể nhận diện bảng thành phần dinh dưỡng. Vui lòng chụp/chọn ảnh rõ nét hơn!');
+                resetScanner();
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Đã xảy ra lỗi trong quá trình phân tích nhãn.');
+            resetScanner();
+        }
+    }
+
+    async function getCurrentScanFile() {
+        if (fileInput.files && fileInput.files[0]) {
+            return fileInput.files[0];
+        }
+
+        const blob = await fetch(currentImageData).then(r => r.blob());
+        return new File([blob], 'label_scan.jpg', { type: blob.type || 'image/jpeg' });
+    }
+
+    function renderValidation(validation) {
+        const panel = document.getElementById('validationPanel');
+        const badge = document.getElementById('validationBadge');
+        const warnings = document.getElementById('validationWarnings');
+
+        if (!validation) {
+            panel.style.display = 'none';
+            return;
+        }
+
+        const confidence = Math.round((validation.confidence || 0) * 100);
+        badge.textContent = `${validation.level || 'unverified'} - ${confidence}%`;
+        warnings.replaceChildren();
+
+        const items = validation.warnings || [];
+        items.forEach((message) => {
+            const item = document.createElement('div');
+            item.textContent = message;
+            warnings.appendChild(item);
+        });
+
+        panel.style.display = 'block';
+    }
+
+    // Save notes
+    async function saveNotes() {
+        if (!currentScanId) return;
+        const notes = document.getElementById('notesInput').value;
+        try {
+            const btn = document.querySelector('[onclick="saveNotes()"]');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+            // We can add a quick endpoint in HomeController or mock it.
+            // Let's create `/api/scans/{id}/notes` in HomeController. Wait, let's look at DatabaseService.
+            // DatabaseService has UpdateNotesAsync. Let's see if HomeController has it.
+            // Ah! HomeController doesn't have an endpoint for Notes yet. Let's add it!
+            // Let's check how we can add it, or we can write the endpoint first.
+            // For now, let's fetch to `/api/scans/${currentScanId}/notes` (we will add this endpoint next).
+            const response = await fetch(`/api/scans/${currentScanId}/notes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes })
+            });
+
+            if (response.ok) {
+                const toast = document.getElementById('toastScanSuccess');
+                toast.style.display = 'flex';
+                setTimeout(() => toast.style.display = 'none', 3000);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            const btn = document.querySelector('[onclick="saveNotes()"]');
+            btn.disabled = false;
+            btn.textContent = 'Lưu ghi chú';
+        }
+    }
+
+    // Toggle favorite on scan results
+    async function toggleFavoriteResult() {
+        if (!currentScanId) return;
+        try {
+            const r = await fetch(`/api/scans/${currentScanId}/favorite`, { method: 'POST' });
+            if (r.ok) {
+                isResultFavorite = !isResultFavorite;
+                const btn = document.getElementById('btnToggleFavorite');
+                if (isResultFavorite) {
+                    btn.className = 'btn btn--primary btn--block';
+                    btn.innerHTML = '<i class="fa-solid fa-heart"></i> Đã yêu thích';
+                } else {
+                    btn.className = 'btn btn--outline btn--block';
+                    btn.innerHTML = '<i class="fa-regular fa-heart"></i> Yêu thích';
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    // Mock comparison helper
+    function addToComparisonResult() {
+        alert('Đã thêm sản phẩm này vào danh sách so sánh!');
+    }
+</script>

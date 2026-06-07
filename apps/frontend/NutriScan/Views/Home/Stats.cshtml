@@ -1,0 +1,148 @@
+@{
+    ViewData["Title"] = "Thống kê";
+}
+
+<div class="app-container">
+    <!-- Header -->
+    <header class="page-header">
+        <a asp-controller="Home" asp-action="Index" class="page-header__back">
+            <i class="fa-solid fa-angle-left"></i>
+        </a>
+        <h1 class="page-header__title">Phân tích thống kê</h1>
+    </header>
+
+    <div class="page-content" style="display: flex; flex-direction: column; gap: var(--space-4);">
+        
+        <!-- Summary Stats Grid -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+            <div class="stat-card">
+                <div class="stat-card__value" id="totalScans">0</div>
+                <div class="stat-card__label">Tổng quét</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__value" id="totalFavorites">0</div>
+                <div class="stat-card__label">Yêu thích</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__value" id="avgCalories" style="color: var(--color-calories);">0</div>
+                <div class="stat-card__label">Calo TB</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card__value" id="avgProtein" style="color: var(--color-protein);">0</div>
+                <div class="stat-card__label">Đạm TB</div>
+            </div>
+        </div>
+
+        <!-- Chart Container Card -->
+        <div class="card" style="position: relative; height: 320px; display: flex; flex-direction: column;">
+            <h3 class="text-sm font-bold uppercase text-muted" style="margin-bottom: var(--space-3); letter-spacing: 0.05em;">Tỷ lệ chất dinh dưỡng TB</h3>
+            <div style="flex: 1; position: relative;">
+                <canvas id="nutritionChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Detailed Nutrition Metrics -->
+        <div class="card">
+            <h3 class="text-md font-bold" style="margin-bottom: var(--space-3);">Chi tiết trung bình / lần quét</h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+                <div class="list-item" style="justify-content: space-between; padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border-light);">
+                    <span class="text-secondary font-medium"><i class="fa-solid fa-fire" style="color: var(--color-calories); margin-right: 8px;"></i>Lượng Calo trung bình</span>
+                    <strong class="text-md" id="summaryCalories">0 kcal</strong>
+                </div>
+                <div class="list-item" style="justify-content: space-between; padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border-light);">
+                    <span class="text-secondary font-medium"><i class="fa-solid fa-wheat-awn" style="color: var(--color-carbs); margin-right: 8px;"></i>Tinh bột (Carbs) TB</span>
+                    <strong class="text-md" id="summaryCarbs">0g</strong>
+                </div>
+                <div class="list-item" style="justify-content: space-between; padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border-light);">
+                    <span class="text-secondary font-medium"><i class="fa-solid fa-egg" style="color: var(--color-protein); margin-right: 8px;"></i>Chất đạm (Protein) TB</span>
+                    <strong class="text-md" id="summaryProtein">0g</strong>
+                </div>
+                <div class="list-item" style="justify-content: space-between; padding: var(--space-3) 0;">
+                    <span class="text-secondary font-medium"><i class="fa-solid fa-droplet" style="color: var(--color-fat); margin-right: 8px;"></i>Chất béo (Fat) TB</span>
+                    <strong class="text-md" id="summaryFat">0g</strong>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <partial name="_BottomNav" />
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    let myChart = null;
+
+    async function loadStats() {
+        try {
+            const response = await fetch('/api/stats/overview');
+            if (!response.ok) throw new Error('API error');
+            const stats = await response.json();
+
+            document.getElementById('totalScans').textContent = stats.totalScans;
+            document.getElementById('totalFavorites').textContent = stats.totalFavorites;
+            document.getElementById('avgCalories').textContent = Math.round(stats.averageCalories);
+            document.getElementById('avgProtein').textContent = Math.round(stats.averageProtein) + 'g';
+
+            document.getElementById('summaryCalories').textContent = Math.round(stats.averageCalories) + ' kcal';
+            document.getElementById('summaryCarbs').textContent = Math.round(stats.averageCarbs) + 'g';
+            document.getElementById('summaryProtein').textContent = Math.round(stats.averageProtein) + 'g';
+            document.getElementById('summaryFat').textContent = Math.round(stats.averageFat) + 'g';
+
+            createChart(stats.averageFat, stats.averageCarbs, stats.averageProtein);
+        } catch (err) {
+            console.error('Error loading stats:', err);
+        }
+    }
+
+    function createChart(fat, carbs, protein) {
+        const ctx = document.getElementById('nutritionChart').getContext('2d');
+        if (myChart) {
+            myChart.destroy();
+        }
+
+        // Handle case where there is no data
+        const total = fat + carbs + protein;
+        const dataVals = total === 0 ? [1, 1, 1] : [fat, carbs, protein];
+        const labels = total === 0 ? ['Chất béo (Chưa có)', 'Carb (Chưa có)', 'Protein (Chưa có)'] : ['Chất béo (Fat)', 'Tinh bột (Carb)', 'Chất đạm (Protein)'];
+
+        myChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: dataVals,
+                    backgroundColor: [
+                        '#EF4444', // Fat
+                        '#F97316', // Carbs
+                        '#3B82F6'  // Protein
+                    ],
+                    borderColor: '#151F32', // Matches card background
+                    borderWidth: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#94A3B8',
+                            font: {
+                                family: 'Inter',
+                                size: 11
+                            },
+                            usePointStyle: true,
+                            padding: 15
+                        }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    }
+
+    window.addEventListener('load', loadStats);
+</script>

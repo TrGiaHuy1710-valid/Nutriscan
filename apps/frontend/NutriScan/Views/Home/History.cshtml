@@ -1,0 +1,156 @@
+@{
+    ViewData["Title"] = "Lịch sử quét";
+}
+
+<div class="app-container">
+    <!-- Header -->
+    <header class="page-header">
+        <a asp-controller="Home" asp-action="Index" class="page-header__back">
+            <i class="fa-solid fa-angle-left"></i>
+        </a>
+        <h1 class="page-header__title">Lịch sử hoạt động</h1>
+    </header>
+
+    <div class="page-content" style="display: flex; flex-direction: column; gap: var(--space-3);">
+        <div id="historyListContainer" style="display: flex; flex-direction: column; gap: var(--space-3);">
+            <!-- History items loaded dynamically -->
+        </div>
+
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-state__icon">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+            </div>
+            <p class="empty-state__title">Lịch sử trống</p>
+            <p class="empty-state__text" style="margin-bottom: var(--space-5);">Bạn chưa thực hiện quét bất kỳ sản phẩm nào.</p>
+            <a asp-controller="Home" asp-action="Nutrition" class="btn btn--primary">Quét ngay</a>
+        </div>
+    </div>
+
+    <partial name="_BottomNav" />
+</div>
+
+<script>
+    async function loadHistory() {
+        const historyContainer = document.getElementById('historyListContainer');
+        const emptyState = document.getElementById('emptyState');
+        
+        try {
+            const response = await fetch('/api/scans/history?limit=100');
+            if (!response.ok) throw new Error('API error');
+            const data = await response.json();
+
+            if (!data || data.length === 0) {
+                historyContainer.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            historyContainer.innerHTML = '';
+            
+            data.forEach(item => {
+                const dateObj = new Date(item.scannedDate);
+                const formattedDate = dateObj.toLocaleDateString('vi-VN', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: 'numeric' 
+                });
+                const formattedTime = dateObj.toLocaleTimeString('vi-VN', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.style.padding = 'var(--space-4)';
+                card.style.position = 'relative';
+                
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                        <div>
+                            <span class="text-xs text-muted font-medium">${formattedDate} Lúc ${formattedTime}</span>
+                            <h3 class="text-sm font-bold" style="margin-top: 2px; word-break: break-all;">${item.productName || 'Thực phẩm quét'}</h3>
+                        </div>
+                        <div style="display: flex; gap: 4px;">
+                            <button onclick="toggleFav(${item.id}, this)" class="btn--ghost" style="padding: 4px; color: var(--color-text-muted);">
+                                <i class="${item.isFavorite ? 'fa-solid' : 'fa-regular'} fa-heart text-danger"></i>
+                            </button>
+                            <button onclick="deleteHistoryItem(${item.id}, this)" class="btn--ghost" style="padding: 4px; color: var(--color-text-muted);">
+                                <i class="fa-solid fa-trash-can hover-danger"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: var(--space-2); background: var(--color-bg); padding: var(--space-2); border-radius: var(--radius-sm); margin-top: 8px;">
+                        <div style="text-align: center;">
+                            <div class="text-xs text-muted">Calo</div>
+                            <div class="text-xs font-bold" style="color: var(--color-calories);">${item.calories}</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div class="text-xs text-muted">Đạm</div>
+                            <div class="text-xs font-bold" style="color: var(--color-protein);">${item.protein}g</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div class="text-xs text-muted">Carb</div>
+                            <div class="text-xs font-bold" style="color: var(--color-carbs);">${item.carbs}g</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div class="text-xs text-muted">Béo</div>
+                            <div class="text-xs font-bold" style="color: var(--color-fat);">${item.fat}g</div>
+                        </div>
+                    </div>
+
+                    ${item.notes ? `
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--color-border-light); font-size: 11px; color: var(--color-text-secondary);">
+                        <i class="fa-solid fa-note-sticky" style="margin-right: 4px;"></i> ${item.notes}
+                    </div>
+                    ` : ''}
+                `;
+                
+                historyContainer.appendChild(card);
+            });
+        } catch (err) {
+            console.error('Error loading history:', err);
+            emptyState.style.display = 'block';
+        }
+    }
+
+    async function toggleFav(id, btn) {
+        try {
+            const r = await fetch(`/api/scans/${id}/favorite`, { method: 'POST' });
+            if (r.ok) {
+                const icon = btn.querySelector('i');
+                if (icon.classList.contains('fa-solid')) {
+                    icon.className = 'fa-regular fa-heart text-danger';
+                } else {
+                    icon.className = 'fa-solid fa-heart text-danger';
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function deleteHistoryItem(id, btn) {
+        if (!confirm('Bạn có chắc chắn muốn xóa bản ghi này?')) return;
+        try {
+            const response = await fetch(`/api/scans/${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                // Reload history
+                loadHistory();
+            } else {
+                alert('Không thể xóa bản ghi.');
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    window.addEventListener('load', loadHistory);
+</script>
+
+<style>
+    .hover-danger:hover {
+        color: var(--color-danger) !important;
+    }
+</style>

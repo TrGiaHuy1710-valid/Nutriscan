@@ -1,0 +1,339 @@
+@model dynamic
+@{
+    ViewData["Title"] = "Trang chủ";
+}
+
+<div class="app-container">
+    <!-- Header -->
+    <header class="page-header" style="justify-content: space-between;">
+        <div>
+            <h1 class="page-header__title" id="welcomeUser">Chào mừng quay lại</h1>
+            <p class="text-xs text-muted" id="userGoalText">Mục tiêu: Đang tính toán...</p>
+        </div>
+        <a asp-controller="Home" asp-action="Profile" class="page-header__action">
+            <i class="fa-solid fa-user-gear"></i>
+        </a>
+    </header>
+
+    <div class="page-content" style="display: flex; flex-direction: column; gap: var(--space-4);">
+        
+        <!-- Daily Calories Ring Card -->
+        <div class="card card--primary" style="padding: var(--space-5); text-align: center; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -20px; right: -20px; font-size: 120px; opacity: 0.05; color: white; pointer-events: none;">
+                <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+            
+            <h3 class="text-sm uppercase font-bold" style="color: rgba(255,255,255,0.8); margin-bottom: var(--space-3); letter-spacing: 0.1em;">Calo Hôm Nay</h3>
+            
+            <div style="display: flex; align-items: center; justify-content: center; gap: var(--space-6); margin: var(--space-2) 0;">
+                <!-- Circular Progress SVG -->
+                <div class="progress-ring">
+                    <svg class="progress-ring__svg" width="140" height="140">
+                        <circle class="progress-ring__circle-bg" cx="70" cy="70" r="60" style="stroke: rgba(255,255,255,0.15); stroke-width: 10;" />
+                        <circle class="progress-ring__circle" cx="70" cy="70" r="60" id="calorieCircle" 
+                                style="stroke: var(--color-text-inverse); stroke-width: 10; stroke-dasharray: 377; stroke-dashoffset: 377;" />
+                    </svg>
+                    <div class="progress-ring__content">
+                        <div class="text-2xl font-bold" id="consumedCalories" style="color: white; line-height: 1.1;">0</div>
+                        <div class="text-xs" style="color: rgba(255,255,255,0.7); font-weight: 500;">/ <span id="targetCalories">2000</span> kcal</div>
+                    </div>
+                </div>
+
+                <div style="text-align: left; display: flex; flex-direction: column; gap: var(--space-2);">
+                    <div>
+                        <div class="text-xs" style="color: rgba(255,255,255,0.7);">Còn lại cần nạp</div>
+                        <div class="text-xl font-bold" id="remainingCalories" style="color: white;">0 kcal</div>
+                    </div>
+                    <div id="calorieStatusBadge" class="badge badge--success" style="font-size: 10px; width: fit-content; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
+                        Đang trong mục tiêu
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Macro Progress Bars Card -->
+        <div class="card">
+            <h3 class="text-md font-bold" style="margin-bottom: var(--space-4);">Chỉ số dinh dưỡng (Macros)</h3>
+            <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+                
+                <!-- Carb -->
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-1); font-size: var(--font-size-sm);">
+                        <span class="font-semibold"><i class="fa-solid fa-wheat-awn text-carbs" style="margin-right: 6px;"></i>Tinh bột (Carbs)</span>
+                        <span class="text-secondary"><strong id="consumedCarbs" style="color: var(--color-text);">0g</strong> / <span id="targetCarbs" class="text-muted">0g</span></span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-bar__fill progress-bar__fill--carbs" id="carbBar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Protein -->
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-1); font-size: var(--font-size-sm);">
+                        <span class="font-semibold"><i class="fa-solid fa-egg text-protein" style="margin-right: 6px;"></i>Chất đạm (Protein)</span>
+                        <span class="text-secondary"><strong id="consumedProtein" style="color: var(--color-text);">0g</strong> / <span id="targetProtein" class="text-muted">0g</span></span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-bar__fill progress-bar__fill--protein" id="proteinBar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Fat -->
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-1); font-size: var(--font-size-sm);">
+                        <span class="font-semibold"><i class="fa-solid fa-droplet text-fat" style="margin-right: 6px;"></i>Chất béo (Fat)</span>
+                        <span class="text-secondary"><strong id="consumedFat" style="color: var(--color-text);">0g</strong> / <span id="targetFat" class="text-muted">0g</span></span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-bar__fill progress-bar__fill--fat" id="fatBar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- AI Food Recommendations -->
+        <div class="card" style="border: 1px solid rgba(16, 185, 129, 0.2); background: linear-gradient(180deg, var(--color-surface) 0%, rgba(16, 185, 129, 0.03) 100%);">
+            <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3);">
+                <div style="width: 28px; height: 28px; border-radius: var(--radius-full); background: rgba(16, 185, 129, 0.15); display: flex; align-items: center; justify-content: center; color: var(--color-primary);">
+                    <i class="fa-solid fa-wand-magic-sparkles" style="font-size: 14px;"></i>
+                </div>
+                <h3 class="text-md font-bold">Gợi ý thực phẩm hôm nay</h3>
+            </div>
+            
+            <p id="recommendationAdvice" class="text-sm text-secondary" style="margin-bottom: var(--space-4); line-height: 1.5;">
+                Đang phân tích thói quen ăn uống của bạn...
+            </p>
+
+            <div id="foodRecsContainer" style="display: flex; flex-direction: column; gap: var(--space-3);">
+                <!-- Predefined list will be populated dynamically -->
+            </div>
+        </div>
+
+        <!-- Scanned Today Section -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                <h3 class="text-md font-bold">Thực phẩm đã quét hôm nay</h3>
+                <a asp-controller="Home" asp-action="History" class="text-xs font-semibold text-primary" style="display: flex; align-items: center; gap: 4px;">
+                    Xem lịch sử <i class="fa-solid fa-angle-right"></i>
+                </a>
+            </div>
+            
+            <div id="scansTodayList" style="display: flex; flex-direction: column; gap: var(--space-2);">
+                <!-- Scans will load here dynamically -->
+                <div class="empty-state" style="padding: var(--space-6) 0;">
+                    <div class="empty-state__icon" style="width: 48px; height: 48px; font-size: 18px; margin-bottom: var(--space-3);">
+                        <i class="fa-solid fa-camera"></i>
+                    </div>
+                    <p class="empty-state__title text-sm">Chưa quét thực phẩm nào hôm nay</p>
+                    <p class="empty-state__text text-xs" style="max-width: 220px;">Hãy chụp ảnh bảng thành phần thực phẩm để tính lượng calo đã nạp.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Floating Action Button for OCR Scan -->
+    <a asp-controller="Home" asp-action="Nutrition" 
+       style="position: fixed; bottom: 85px; right: 20px; width: 56px; height: 56px; border-radius: var(--radius-full); 
+              background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%); 
+              color: white; display: flex; align-items: center; justify-content: center; font-size: 22px; 
+              box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4), 0 0 20px rgba(16, 185, 129, 0.15); 
+              z-index: 99; transition: transform var(--transition-base);" 
+       onmouseover="this.style.transform='scale(1.1)'" 
+       onmouseout="this.style.transform='scale(1)'">
+        <i class="fa-solid fa-camera"></i>
+    </a>
+
+    <partial name="_BottomNav" />
+</div>
+
+<script>
+    // Load daily summaries and recommendations
+    async function loadDashboardData() {
+        try {
+            // Load intake summary
+            const response = await fetch('/api/daily-intake/summary');
+            if (!response.ok) throw new Error('API error');
+            const data = await response.json();
+            
+            const profile = data.profile;
+            const intake = data.intake;
+            const remaining = data.remaining;
+
+            // Welcome message
+            document.getElementById('welcomeUser').textContent = `Chào, ${profile.name || 'Người dùng'}`;
+            
+            // Translate goal
+            let goalVietnamese = "Duy trì cân nặng";
+            if (profile.goalType === "Lose") goalVietnamese = "Giảm cân lành mạnh";
+            if (profile.goalType === "Gain") goalVietnamese = "Tăng cân cơ bắp";
+            document.getElementById('userGoalText').textContent = `Mục tiêu: ${goalVietnamese}`;
+
+            // Calories Ring targets
+            document.getElementById('consumedCalories').textContent = intake.calories;
+            document.getElementById('targetCalories').textContent = Math.round(profile.calorieTarget);
+            document.getElementById('remainingCalories').textContent = `${Math.round(remaining.calories)} kcal`;
+
+            // Update SVG circle
+            const r = 60;
+            const circumference = 2 * Math.PI * r; // ~377
+            const calorieCircle = document.getElementById('calorieCircle');
+            calorieCircle.style.strokeDasharray = circumference;
+
+            let percentage = intake.calories / profile.calorieTarget;
+            if (percentage > 1.0) percentage = 1.0;
+            if (isNaN(percentage)) percentage = 0;
+            
+            const offset = circumference - (percentage * circumference);
+            calorieCircle.style.strokeDashoffset = offset;
+
+            // Calorie status badge
+            const badge = document.getElementById('calorieStatusBadge');
+            if (intake.calories > profile.calorieTarget) {
+                badge.className = 'badge badge--danger';
+                badge.textContent = 'Vượt mục tiêu';
+                badge.style.background = '';
+                badge.style.color = '';
+                badge.style.border = '';
+            } else {
+                badge.className = 'badge badge--success';
+                badge.textContent = 'Đang trong mục tiêu';
+                badge.style.background = 'rgba(16, 185, 129, 0.2)';
+                badge.style.color = 'var(--color-primary-light)';
+                badge.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+            }
+
+            // Macros targets
+            document.getElementById('consumedCarbs').textContent = `${Math.round(intake.carbs)}g`;
+            document.getElementById('targetCarbs').textContent = `${Math.round(profile.carbTarget)}g`;
+            let carbPct = (intake.carbs / profile.carbTarget) * 100;
+            document.getElementById('carbBar').style.width = `${Math.min(100, isNaN(carbPct) ? 0 : carbPct)}%`;
+
+            document.getElementById('consumedProtein').textContent = `${Math.round(intake.protein)}g`;
+            document.getElementById('targetProtein').textContent = `${Math.round(profile.proteinTarget)}g`;
+            let proteinPct = (intake.protein / profile.proteinTarget) * 100;
+            document.getElementById('proteinBar').style.width = `${Math.min(100, isNaN(proteinPct) ? 0 : proteinPct)}%`;
+
+            document.getElementById('consumedFat').textContent = `${Math.round(intake.fat)}g`;
+            document.getElementById('targetFat').textContent = `${Math.round(profile.fatTarget)}g`;
+            let fatPct = (intake.fat / profile.fatTarget) * 100;
+            document.getElementById('fatBar').style.width = `${Math.min(100, isNaN(fatPct) ? 0 : fatPct)}%`;
+
+            // Load Food Recommendations
+            loadFoodRecommendations();
+
+            // Load Today's scans
+            loadTodayScans();
+
+        } catch (err) {
+            console.error('Error loading dashboard data:', err);
+        }
+    }
+
+    async function loadFoodRecommendations() {
+        try {
+            const response = await fetch('/api/recommendations/food');
+            if (!response.ok) throw new Error('API error');
+            const data = await response.json();
+
+            document.getElementById('recommendationAdvice').textContent = data.advice;
+
+            const recsContainer = document.getElementById('foodRecsContainer');
+            recsContainer.innerHTML = '';
+
+            data.recommendations.forEach(r => {
+                const item = document.createElement('div');
+                item.className = 'list-item card card--flat';
+                item.style.padding = 'var(--space-3) var(--space-4)';
+                item.style.borderColor = 'rgba(255,255,255,0.05)';
+                item.style.background = 'var(--color-bg)';
+                
+                item.innerHTML = `
+                    <div class="list-item__icon" style="background: rgba(16, 185, 129, 0.1); color: var(--color-primary); width: 36px; height: 36px; font-size: 16px;">
+                        <i class="fa-solid fa-utensils"></i>
+                    </div>
+                    <div class="list-item__body">
+                        <div class="list-item__title text-sm font-semibold">${r.name}</div>
+                        <div class="list-item__subtitle text-xs" style="color: var(--color-primary-light); font-weight: 500;">
+                            ${r.reason}
+                        </div>
+                    </div>
+                    <div style="text-align: right; flex-shrink: 0;">
+                        <div class="text-sm font-bold" style="color: var(--color-calories);">${r.calories} kcal</div>
+                        <div class="text-xs text-muted">P: ${Math.round(r.protein)}g | C: ${Math.round(r.carbs)}g</div>
+                    </div>
+                `;
+                recsContainer.appendChild(item);
+            });
+        } catch (err) {
+            console.error('Error loading food recommendations:', err);
+        }
+    }
+
+    async function loadTodayScans() {
+        try {
+            const response = await fetch('/api/scans/history?limit=10');
+            if (!response.ok) throw new Error('API error');
+            const scans = await response.json();
+
+            // Filter scans that are created today
+            const today = new Date().toDateString();
+            const todayScans = scans.filter(s => new Date(s.scannedDate).toDateString() === today);
+
+            const scansContainer = document.getElementById('scansTodayList');
+            if (todayScans.length === 0) {
+                // Keep the empty state
+                return;
+            }
+
+            scansContainer.innerHTML = '';
+            todayScans.forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'list-item card card--flat';
+                item.style.padding = 'var(--space-3) var(--space-4)';
+                item.style.borderColor = 'rgba(255,255,255,0.05)';
+                
+                item.innerHTML = `
+                    <div class="list-item__icon" style="background: rgba(15, 23, 42, 0.5); color: var(--color-text-secondary); width: 36px; height: 36px; font-size: 16px;">
+                        <i class="fa-solid fa-file-invoice"></i>
+                    </div>
+                    <div class="list-item__body">
+                        <div class="list-item__title text-sm font-semibold">${s.productName}</div>
+                        <div class="list-item__subtitle text-xs">
+                            ${new Date(s.scannedDate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                    </div>
+                    <div style="text-align: right; flex-shrink: 0; margin-right: var(--space-1);">
+                        <div class="text-sm font-bold">${s.calories} kcal</div>
+                        <div class="text-xs text-muted">P: ${s.protein}g | C: ${s.carbs}g</div>
+                    </div>
+                    <button onclick="toggleFav(${s.id}, this)" class="list-item__action" style="padding: 4px;">
+                        <i class="${s.isFavorite ? 'fa-solid' : 'fa-regular'} fa-heart text-danger"></i>
+                    </button>
+                `;
+                scansContainer.appendChild(item);
+            });
+        } catch (err) {
+            console.error('Error loading today scans:', err);
+        }
+    }
+
+    async function toggleFav(id, btn) {
+        try {
+            const r = await fetch(`/api/scans/${id}/favorite`, { method: 'POST' });
+            if (r.ok) {
+                const icon = btn.querySelector('i');
+                if (icon.classList.contains('fa-solid')) {
+                    icon.className = 'fa-regular fa-heart text-danger';
+                } else {
+                    icon.className = 'fa-solid fa-heart text-danger';
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    window.addEventListener('load', loadDashboardData);
+</script>

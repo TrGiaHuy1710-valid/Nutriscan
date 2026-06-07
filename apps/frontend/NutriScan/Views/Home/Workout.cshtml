@@ -1,0 +1,575 @@
+@{
+    ViewData["Title"] = "Luyện tập";
+}
+
+<div class="app-container">
+    <!-- Header -->
+    <header class="page-header">
+        <a asp-controller="Home" asp-action="Index" class="page-header__back">
+            <i class="fa-solid fa-angle-left"></i>
+        </a>
+        <h1 class="page-header__title">Gợi ý Tập luyện</h1>
+    </header>
+
+    <div class="page-content" style="display: flex; flex-direction: column; gap: var(--space-4);">
+        
+        <!-- Weekly Planner -->
+        <div class="card" style="padding: var(--space-4);">
+            <h3 class="text-sm font-bold uppercase text-muted" style="margin-bottom: var(--space-3); letter-spacing: 0.05em;">Lịch tập tuần này</h3>
+            <div style="display: flex; justify-content: space-between; gap: var(--space-1);">
+                <div class="day-bubble" onclick="selectDay(1)" id="day-1">T2<span class="dot"></span></div>
+                <div class="day-bubble" onclick="selectDay(2)" id="day-2">T3<span class="dot"></span></div>
+                <div class="day-bubble" onclick="selectDay(3)" id="day-3">T4<span class="dot"></span></div>
+                <div class="day-bubble" onclick="selectDay(4)" id="day-4">T5<span class="dot"></span></div>
+                <div class="day-bubble" onclick="selectDay(5)" id="day-5">T6<span class="dot"></span></div>
+                <div class="day-bubble" onclick="selectDay(6)" id="day-6">T7<span class="dot"></span></div>
+                <div class="day-bubble" onclick="selectDay(0)" id="day-0">CN<span class="dot"></span></div>
+            </div>
+            
+            <div id="selectedDayWorkouts" style="margin-top: var(--space-3); font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                <!-- Dynamic workouts for selected day -->
+            </div>
+        </div>
+
+        <!-- AI Recommendation Section -->
+        <div class="card" style="border: 1px solid rgba(139, 92, 246, 0.2); background: linear-gradient(180deg, var(--color-surface) 0%, rgba(139, 92, 246, 0.03) 100%);">
+            <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3);">
+                <div style="width: 28px; height: 28px; border-radius: var(--radius-full); background: rgba(139, 92, 246, 0.15); display: flex; align-items: center; justify-content: center; color: var(--color-accent-light);">
+                    <i class="fa-solid fa-wand-magic-sparkles" style="font-size: 14px;"></i>
+                </div>
+                <h3 class="text-md font-bold">Bài tập AI đề xuất</h3>
+            </div>
+            <p id="workoutAdvice" class="text-sm text-secondary" style="margin-bottom: var(--space-4); line-height: 1.5;">
+                Đang đề xuất lịch trình tối ưu dựa trên mục tiêu...
+            </p>
+            
+            <div id="aiWorkoutRecs" style="display: flex; flex-direction: column; gap: var(--space-3);">
+                <!-- Dynamic Recs -->
+            </div>
+        </div>
+
+        <!-- Exercise Database Filter -->
+        <div class="card">
+            <h3 class="text-md font-bold" style="margin-bottom: var(--space-3);">Thư viện bài tập</h3>
+            
+            <!-- Type Filters -->
+            <div style="display: flex; gap: var(--space-2); overflow-x: auto; padding-bottom: 8px; margin-bottom: var(--space-3); scrollbar-width: none;">
+                <button class="btn btn--primary btn--sm" onclick="filterType('', this)">Tất cả</button>
+                <button class="btn btn--outline btn--sm" onclick="filterType('cardio', this)">Cardio</button>
+                <button class="btn btn--outline btn--sm" onclick="filterType('strength', this)">Sức mạnh</button>
+                <button class="btn btn--outline btn--sm" onclick="filterType('flexibility', this)">Dẻo dai</button>
+            </div>
+
+            <!-- Filters Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-bottom: var(--space-4);">
+                <select id="diffFilter" class="form-input form-select text-xs" style="padding: 6px 12px;" onchange="loadAllWorkouts()">
+                    <option value="">Độ khó: Tất cả</option>
+                    <option value="Dễ">Dễ</option>
+                    <option value="Trung bình">Trung bình</option>
+                    <option value="Khó">Khó</option>
+                </select>
+                <select id="muscleFilter" class="form-input form-select text-xs" style="padding: 6px 12px;" onchange="loadAllWorkouts()">
+                    <option value="">Nhóm cơ: Tất cả</option>
+                    <option value="Toàn thân">Toàn thân</option>
+                    <option value="Ngực/Vai">Ngực/Vai</option>
+                    <option value="Bụng">Bụng</option>
+                    <option value="Mông/Đùi">Mông/Đùi</option>
+                    <option value="Lưng/Tay">Lưng/Tay</option>
+                </select>
+            </div>
+
+            <!-- Workouts List -->
+            <div id="allWorkoutsContainer" style="display: flex; flex-direction: column; gap: var(--space-3);">
+                <!-- Loaded here -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Active Timer Modal Overlay -->
+    <div id="timerModal" style="display: none; position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; height: 100vh; background: #0B0F19; z-index: 999; padding: var(--space-6); flex-direction: column; align-items: center; justify-content: space-between;">
+        <div style="text-align: center; width: 100%;">
+            <span id="timerExerciseType" class="badge badge--success" style="margin-bottom: var(--space-2); background: rgba(16, 185, 129, 0.15); color: var(--color-primary-light);">CARDIO</span>
+            <h2 id="timerExerciseName" class="text-xl font-bold" style="color: white; margin-bottom: var(--space-1); word-break: break-all;">Bài tập mẫu</h2>
+            <p id="timerExerciseMuscle" class="text-xs text-muted">Nhóm cơ: Toàn thân</p>
+        </div>
+
+        <!-- Timer Circle representation -->
+        <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 220px; height: 220px;">
+            <svg width="220" height="220" style="transform: rotate(-90deg);">
+                <circle cx="110" cy="110" r="100" style="fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 12;" />
+                <circle id="timerProgressCircle" cx="110" cy="110" r="100" 
+                        style="fill: none; stroke: var(--color-primary); stroke-width: 12; stroke-linecap: round; stroke-dasharray: 628; stroke-dashoffset: 0; transition: stroke-dashoffset 1s linear;" />
+            </svg>
+            <div style="position: absolute; text-align: center;">
+                <div id="timerCountdown" class="text-4xl font-bold" style="color: white; font-family: monospace;">20:00</div>
+                <div class="text-xs text-muted" style="margin-top: 4px;">còn lại</div>
+            </div>
+        </div>
+
+        <!-- Current Step / Instructions -->
+        <div class="card" style="width: 100%; padding: var(--space-4); background: #151F32; border: 1px solid var(--color-border);">
+            <h4 class="text-xs uppercase font-bold text-muted" style="margin-bottom: var(--space-2); letter-spacing: 0.05em;">Hướng dẫn động tác</h4>
+            <div id="timerStepInstruction" class="text-sm font-semibold" style="color: white; line-height: 1.5; min-height: 48px;">
+                Đang chuẩn bị...
+            </div>
+        </div>
+
+        <!-- Control buttons -->
+        <div style="display: flex; gap: var(--space-3); width: 100%;">
+            <button class="btn btn--outline btn--lg btn-block" onclick="quitWorkout()">Thoát</button>
+            <button class="btn btn--primary btn--lg btn-block" id="timerPauseBtn" onclick="togglePauseWorkout()">Tạm dừng</button>
+        </div>
+    </div>
+
+    <!-- Celebration Screen Overlay -->
+    <div id="celebrationModal" style="display: none; position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; height: 100vh; background: #0B0F19; z-index: 1000; padding: var(--space-6); flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: var(--space-6);">
+        <div style="width: 90px; height: 90px; border-radius: var(--radius-full); background: rgba(16, 185, 129, 0.15); display: flex; align-items: center; justify-content: center; color: var(--color-primary); font-size: 42px; animation: pulse 1.5s infinite;">
+            <i class="fa-solid fa-trophy"></i>
+        </div>
+        <div>
+            <h1 class="text-3xl font-extrabold" style="color: white; margin-bottom: var(--space-2);">Chúc Mừng!</h1>
+            <p class="text-md text-secondary" style="line-height: 1.5;">Bạn đã hoàn thành xuất sắc bài tập của mình!</p>
+        </div>
+        <div class="card" style="width: 100%; background: #151F32;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+                <div>
+                    <div class="text-xs text-muted">Thời gian tập</div>
+                    <div class="text-xl font-bold" id="celebDuration" style="color: white;">20 phút</div>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Calo tiêu hao</div>
+                    <div class="text-xl font-bold" id="celebCal" style="color: var(--color-calories);">300 kcal</div>
+                </div>
+            </div>
+        </div>
+        <button class="btn btn--primary btn--lg btn-block" onclick="closeCelebration()">Hoàn tất</button>
+    </div>
+
+    <!-- Details View Modal Drawer -->
+    <div id="detailsModal" style="display: none; position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #151F32; border-radius: var(--radius-xl) var(--radius-xl) 0 0; z-index: 800; padding: var(--space-5); box-shadow: 0 -4px 20px rgba(0,0,0,0.5);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-3);">
+            <div>
+                <h3 class="text-lg font-bold" id="detailName" style="color: white;">Tên bài tập</h3>
+                <span id="detailDifficulty" class="badge badge--success" style="margin-top: 4px;">Dễ</span>
+            </div>
+            <button onclick="closeDetails()" style="color: var(--color-text-muted); font-size: 20px;"><i class="fa-solid fa-times"></i></button>
+        </div>
+        
+        <p id="detailDesc" class="text-sm text-secondary" style="margin-bottom: var(--space-4); line-height: 1.5;">Mô tả chi tiết bài tập ở đây...</p>
+        
+        <div class="card card--flat" style="margin-bottom: var(--space-4); border-color: rgba(255,255,255,0.05); background: var(--color-bg);">
+            <h4 class="text-xs uppercase font-bold text-muted" style="margin-bottom: var(--space-3); letter-spacing: 0.05em;">Các bước thực hiện</h4>
+            <ol id="detailSteps" style="padding-left: var(--space-4); color: white; display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--font-size-sm); line-height: 1.4;">
+                <!-- Steps will load here -->
+            </ol>
+        </div>
+
+        <button class="btn btn--primary btn--block btn--lg" id="btnStartWorkout">
+            <i class="fa-solid fa-play"></i> Bắt đầu tập
+        </button>
+    </div>
+
+    <partial name="_BottomNav" />
+</div>
+
+<script>
+    let activeFilterType = '';
+    let currentSelectedDay = new Date().getDay(); // 0 (Sun) - 6 (Sat)
+    let userGoalType = "Maintain";
+
+    // Timer Variables
+    let timerInterval = null;
+    let timerDuration = 0; // total seconds
+    let timerRemaining = 0; // seconds remaining
+    let isTimerPaused = false;
+    let timerSteps = [];
+    let currentStepIndex = 0;
+    let secondsPerStep = 0;
+    let timerWorkoutObject = null;
+
+    // Weekly Completed Track (Mock database / localStorage-based for client-side state)
+    let weeklyCompleted = JSON.parse(localStorage.getItem('weeklyCompletedWorkouts') || '{}');
+
+    function selectDay(dayNum) {
+        currentSelectedDay = dayNum;
+        
+        // Remove active class from all
+        document.querySelectorAll('.day-bubble').forEach(b => b.classList.remove('active'));
+        
+        // Add active to selected
+        const selectedBubble = document.getElementById(`day-${dayNum}`);
+        if (selectedBubble) selectedBubble.classList.add('active');
+
+        // Load workouts for this day
+        loadDayWorkouts(dayNum);
+    }
+
+    function initWeeklyPlanner() {
+        const todayDay = new Date().getDay(); // 0-6
+        selectDay(todayDay);
+
+        // Update dots on weekly planner
+        for (let i = 0; i <= 6; i++) {
+            const bubble = document.getElementById(`day-${i}`);
+            const dot = bubble.querySelector('.dot');
+            if (weeklyCompleted[i] && weeklyCompleted[i].length > 0) {
+                dot.style.display = 'block';
+            } else {
+                dot.style.display = 'none';
+            }
+        }
+    }
+
+    function loadDayWorkouts(dayNum) {
+        const container = document.getElementById('selectedDayWorkouts');
+        const completed = weeklyCompleted[dayNum] || [];
+
+        if (completed.length === 0) {
+            container.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-regular fa-calendar-check" style="font-size: 16px;"></i>
+                    <span>Chưa có bài tập hoàn thành cho ngày này.</span>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = completed.map(w => `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding: var(--space-2) var(--space-3); background: rgba(16, 185, 129, 0.1); border-left: 3px solid var(--color-success); border-radius: var(--radius-sm);">
+                <div>
+                    <span style="font-weight: 600; color: white;">${w.name}</span>
+                    <span class="text-xs text-muted" style="margin-left: 8px;">${w.duration} phút</span>
+                </div>
+                <span class="text-xs font-semibold" style="color: var(--color-calories);">+${w.calories} kcal</span>
+            </div>
+        `).join('');
+    }
+
+    // Recommendation workouts
+    async function loadWorkoutRecommendations() {
+        try {
+            const response = await fetch('/api/recommendations/workout');
+            if (!response.ok) throw new Error('API error');
+            const data = await response.json();
+
+            document.getElementById('workoutAdvice').textContent = data.advice;
+
+            const recsContainer = document.getElementById('aiWorkoutRecs');
+            recsContainer.innerHTML = '';
+
+            data.recommendations.forEach(w => {
+                const item = document.createElement('div');
+                item.className = 'list-item card card--flat';
+                item.style.padding = 'var(--space-3) var(--space-4)';
+                item.style.borderColor = 'rgba(255,255,255,0.05)';
+                item.style.background = 'var(--color-bg)';
+                item.style.cursor = 'pointer';
+                item.onclick = () => showWorkoutDetails(w);
+
+                item.innerHTML = `
+                    <div class="list-item__icon" style="background: rgba(139, 92, 246, 0.1); color: var(--color-accent-light); width: 36px; height: 36px; font-size: 16px;">
+                        <i class="fa-solid ${w.imageUrl || 'fa-dumbbell'}"></i>
+                    </div>
+                    <div class="list-item__body">
+                        <div class="list-item__title text-sm font-semibold">${w.name}</div>
+                        <div class="list-item__subtitle text-xs">${w.muscleGroup} | ${w.difficulty}</div>
+                    </div>
+                    <div style="text-align: right; flex-shrink: 0;">
+                        <div class="text-sm font-bold" style="color: var(--color-calories);">${w.caloriesBurned} kcal</div>
+                        <div class="text-xs text-muted">${w.durationMinutes} phút</div>
+                    </div>
+                `;
+                recsContainer.appendChild(item);
+            });
+        } catch (err) {
+            console.error('Error loading recommendations:', err);
+        }
+    }
+
+    // Load Database library
+    async function loadAllWorkouts() {
+        const diff = document.getElementById('diffFilter').value;
+        const muscle = document.getElementById('muscleFilter').value;
+
+        try {
+            let url = `/api/workouts?type=${activeFilterType}`;
+            if (diff) url += `&difficulty=${diff}`;
+            // Client-side group filter to simplify API
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('API error');
+            let data = await response.json();
+
+            if (muscle) {
+                data = data.filter(w => w.muscleGroup.toLowerCase() === muscle.toLowerCase());
+            }
+
+            const container = document.getElementById('allWorkoutsContainer');
+            container.innerHTML = '';
+
+            if (data.length === 0) {
+                container.innerHTML = '<p class="text-center text-xs text-muted" style="padding: var(--space-4) 0;">Không tìm thấy bài tập nào.</p>';
+                return;
+            }
+
+            data.forEach(w => {
+                const item = document.createElement('div');
+                item.className = 'list-item card card--flat';
+                item.style.padding = 'var(--space-3) var(--space-4)';
+                item.style.borderColor = 'rgba(255,255,255,0.05)';
+                item.style.cursor = 'pointer';
+                item.onclick = () => showWorkoutDetails(w);
+
+                item.innerHTML = `
+                    <div class="list-item__icon" style="background: rgba(255,255,255,0.05); color: var(--color-text-secondary); width: 36px; height: 36px; font-size: 16px;">
+                        <i class="fa-solid ${w.imageUrl || 'fa-dumbbell'}"></i>
+                    </div>
+                    <div class="list-item__body">
+                        <div class="list-item__title text-sm font-semibold">${w.name}</div>
+                        <div class="list-item__subtitle text-xs">${w.muscleGroup} | ${w.difficulty}</div>
+                    </div>
+                    <div style="text-align: right; flex-shrink: 0;">
+                        <div class="text-sm font-bold" style="color: var(--color-primary-light);">${w.caloriesBurned} kcal</div>
+                        <div class="text-xs text-muted">${w.durationMinutes} phút</div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        } catch (err) {
+            console.error('Error loading library:', err);
+        }
+    }
+
+    function filterType(type, btn) {
+        activeFilterType = type;
+        
+        // Reset active state of buttons
+        btn.parentNode.querySelectorAll('button').forEach(b => {
+            b.className = 'btn btn--outline btn--sm';
+        });
+        btn.className = 'btn btn--primary btn--sm';
+
+        loadAllWorkouts();
+    }
+
+    // Modal Details Drawer helper
+    function showWorkoutDetails(w) {
+        document.getElementById('detailName').textContent = w.name;
+        document.getElementById('detailDesc').textContent = w.description;
+        
+        const badge = document.getElementById('detailDifficulty');
+        badge.textContent = w.difficulty;
+        if (w.difficulty === 'Dễ') badge.className = 'badge badge--success';
+        if (w.difficulty === 'Trung bình') badge.className = 'badge badge--warning';
+        if (w.difficulty === 'Khó') badge.className = 'badge badge--danger';
+
+        const stepsList = document.getElementById('detailSteps');
+        stepsList.innerHTML = '';
+        
+        const steps = (w.instructions || '').split(';');
+        steps.forEach(step => {
+            if (step.trim()) {
+                const li = document.createElement('li');
+                li.textContent = step;
+                stepsList.appendChild(li);
+            }
+        });
+
+        // Set action for Play button
+        document.getElementById('btnStartWorkout').onclick = () => {
+            closeDetails();
+            startWorkoutTimer(w);
+        };
+
+        document.getElementById('detailsModal').style.display = 'block';
+    }
+
+    function closeDetails() {
+        document.getElementById('detailsModal').style.display = 'none';
+    }
+
+    // Active Timer Engine
+    function startWorkoutTimer(w) {
+        timerWorkoutObject = w;
+        
+        // Type translation
+        document.getElementById('timerExerciseType').textContent = w.type.toUpperCase();
+        document.getElementById('timerExerciseName').textContent = w.name;
+        document.getElementById('timerExerciseMuscle').textContent = `Nhóm cơ: ${w.muscleGroup} | ${w.difficulty}`;
+
+        // Initialize Timer parameters
+        timerDuration = w.durationMinutes * 60; // to seconds
+        timerRemaining = timerDuration;
+        isTimerPaused = false;
+        
+        timerSteps = (w.instructions || '').split(';').filter(s => s.trim().length > 0);
+        currentStepIndex = 0;
+        secondsPerStep = Math.floor(timerDuration / (timerSteps.length || 1));
+
+        document.getElementById('timerStepInstruction').textContent = timerSteps[0] || 'Bắt đầu tập luyện!';
+
+        // Update display once
+        updateTimerDisplay();
+
+        // Show Modal
+        document.getElementById('timerModal').style.display = 'flex';
+
+        // Play countdown sound / vibration if possible
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
+        // Start Interval loop
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            if (!isTimerPaused) {
+                timerRemaining--;
+                updateTimerDisplay();
+
+                // Step Progression
+                const currentStepOffset = timerDuration - timerRemaining;
+                const newStepIndex = Math.min(
+                    timerSteps.length - 1,
+                    Math.floor(currentStepOffset / secondsPerStep)
+                );
+                
+                if (newStepIndex !== currentStepIndex) {
+                    currentStepIndex = newStepIndex;
+                    document.getElementById('timerStepInstruction').textContent = timerSteps[currentStepIndex] || 'Tiếp tục rèn luyện!';
+                    
+                    // Simple animation effect on text change
+                    const stepCard = document.getElementById('timerStepInstruction');
+                    stepCard.style.opacity = 0.5;
+                    setTimeout(() => stepCard.style.opacity = 1, 300);
+                }
+
+                // Completion trigger
+                if (timerRemaining <= 0) {
+                    completeWorkout();
+                }
+            }
+        }, 1000);
+    }
+
+    function updateTimerDisplay() {
+        const m = Math.floor(timerRemaining / 60);
+        const s = timerRemaining % 60;
+        document.getElementById('timerCountdown').textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+        // Progress SVG Stroke fill
+        const circle = document.getElementById('timerProgressCircle');
+        const circumference = 2 * Math.PI * 100; // ~628
+        let percentage = timerRemaining / timerDuration;
+        if (percentage < 0) percentage = 0;
+        
+        const offset = percentage * circumference;
+        circle.style.strokeDashoffset = circumference - offset;
+    }
+
+    function togglePauseWorkout() {
+        isTimerPaused = !isTimerPaused;
+        const btn = document.getElementById('timerPauseBtn');
+        if (isTimerPaused) {
+            btn.className = 'btn btn--outline btn--lg btn-block';
+            btn.textContent = 'Tiếp tục';
+        } else {
+            btn.className = 'btn btn--primary btn--lg btn-block';
+            btn.textContent = 'Tạm dừng';
+        }
+    }
+
+    function quitWorkout() {
+        if (confirm('Bạn có chắc chắn muốn hủy bỏ buổi tập này?')) {
+            clearInterval(timerInterval);
+            document.getElementById('timerModal').style.display = 'none';
+        }
+    }
+
+    function completeWorkout() {
+        clearInterval(timerInterval);
+        document.getElementById('timerModal').style.display = 'none';
+
+        // Add to weekly completed workouts
+        const todayDay = new Date().getDay(); // 0-6
+        if (!weeklyCompleted[todayDay]) {
+            weeklyCompleted[todayDay] = [];
+        }
+
+        weeklyCompleted[todayDay].push({
+            name: timerWorkoutObject.name,
+            duration: timerWorkoutObject.durationMinutes,
+            calories: timerWorkoutObject.caloriesBurned
+        });
+
+        localStorage.setItem('weeklyCompletedWorkouts', JSON.stringify(weeklyCompleted));
+
+        // Trigger UI seeder/replacer refresh
+        initWeeklyPlanner();
+
+        // Load Celeb Screen details
+        document.getElementById('celebDuration').textContent = `${timerWorkoutObject.durationMinutes} phút`;
+        document.getElementById('celebCal').textContent = `+${timerWorkoutObject.caloriesBurned} kcal`;
+
+        // Open Celeb Screen
+        document.getElementById('celebrationModal').style.display = 'flex';
+    }
+
+    function closeCelebration() {
+        document.getElementById('celebrationModal').style.display = 'none';
+    }
+
+    window.addEventListener('load', () => {
+        initWeeklyPlanner();
+        loadWorkoutRecommendations();
+        loadAllWorkouts();
+    });
+</script>
+
+<style>
+    /* Day planner style */
+    .day-bubble {
+        width: 44px;
+        height: 48px;
+        border-radius: var(--radius-md);
+        background: var(--color-bg);
+        border: 1.5px solid var(--color-border);
+        color: var(--color-text-secondary);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 13px;
+        position: relative;
+        transition: all var(--transition-fast);
+    }
+    
+    .day-bubble:hover {
+        border-color: var(--color-primary);
+        color: var(--color-text);
+    }
+
+    .day-bubble.active {
+        background: var(--color-primary);
+        border-color: var(--color-primary);
+        color: white;
+    }
+
+    .day-bubble .dot {
+        display: none;
+        width: 5px;
+        height: 5px;
+        background: var(--color-calories);
+        border-radius: var(--radius-full);
+        position: absolute;
+        bottom: 5px;
+    }
+
+    .day-bubble.active .dot {
+        background: white;
+    }
+
+    @@keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.08); opacity: 0.9; }
+    }
+</style>

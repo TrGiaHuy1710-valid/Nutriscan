@@ -1,0 +1,40 @@
+@{
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+}
+
+<div class="bottom-nav">
+    <a asp-controller="Home"
+       asp-action="Index"
+       class="bottom-nav__item @(currentAction == "Index" ? "active" : "")">
+        <i class="fa-solid fa-house bottom-nav__icon"></i>
+        <span class="bottom-nav__label">Trang chủ</span>
+    </a>
+
+    <a asp-controller="Home"
+       asp-action="Nutrition"
+       class="bottom-nav__item @(currentAction == "Nutrition" ? "active" : "")">
+        <i class="fa-solid fa-camera bottom-nav__icon"></i>
+        <span class="bottom-nav__label">Quét nhãn</span>
+    </a>
+
+    <a asp-controller="Home"
+       asp-action="Workout"
+       class="bottom-nav__item @(currentAction == "Workout" ? "active" : "")">
+        <i class="fa-solid fa-dumbbell bottom-nav__icon"></i>
+        <span class="bottom-nav__label">Tập luyện</span>
+    </a>
+
+    <a asp-controller="Home"
+       asp-action="Stats"
+       class="bottom-nav__item @(currentAction == "Stats" ? "active" : "")">
+        <i class="fa-solid fa-chart-simple bottom-nav__icon"></i>
+        <span class="bottom-nav__label">Thống kê</span>
+    </a>
+
+    <a asp-controller="Home"
+       asp-action="Profile"
+       class="bottom-nav__item @(currentAction == "Profile" ? "active" : "")">
+        <i class="fa-solid fa-user bottom-nav__icon"></i>
+        <span class="bottom-nav__label">Cá nhân</span>
+    </a>
+</div>
