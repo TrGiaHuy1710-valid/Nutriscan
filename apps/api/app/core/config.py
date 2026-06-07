@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     LLM_PROVIDER: str = "gemini"
     GEMINI_API_KEY: str | None = None
     GEMINI_MODEL: str = "gemini-2.5-flash"
+    OCR_SERVICE_BASE_URL: str = "http://localhost:5000"
 
     UPLOAD_DIR: str = "../../storage/uploads/api"
     MAX_UPLOAD_MB: int = 10

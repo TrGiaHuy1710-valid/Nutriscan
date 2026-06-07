@@ -23,6 +23,8 @@ cd apps/api
 .\venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
+The API expects OCR at `OCR_SERVICE_BASE_URL`, defaulting to `http://localhost:5000`.
+
 Or from the repository root:
 
 ```powershell
@@ -61,7 +63,17 @@ python -m compileall apps/api/app apps/ocr-service/app
 cd apps/api
 .\venv\Scripts\python.exe -m pytest -q
 cd ..\..
+cd apps/ocr-service
+.\venv\Scripts\python.exe -m pytest -q
+cd ..\..
 .\.dotnet\dotnet.exe build apps/frontend/NutriScan/NutriScan.csproj
+```
+
+If the OCR service virtualenv does not have pytest yet, install service dependencies with:
+
+```powershell
+cd apps/ocr-service
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
 ## Notes

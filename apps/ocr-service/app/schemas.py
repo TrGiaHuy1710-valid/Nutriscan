@@ -37,3 +37,24 @@ class OcrServiceSettings:
 class OcrAnalyzeResult:
     raw_text: str
     nutrition: dict
+    detected_foods: list[dict] | None = None
+    confidence: float = 0.0
+    source: str = "local_ocr"
+    fallback_used: bool = False
+    error_code: str | None = None
+    message: str = ""
+    debug_info: dict | None = None
+
+    def to_internal_response(self, request_id: str) -> dict:
+        return {
+            "request_id": request_id,
+            "raw_text": self.raw_text,
+            "nutrition": self.nutrition,
+            "detected_foods": self.detected_foods or [],
+            "confidence": self.confidence,
+            "source": self.source,
+            "fallback_used": self.fallback_used,
+            "error_code": self.error_code,
+            "message": self.message,
+            "debug_info": self.debug_info or {},
+        }

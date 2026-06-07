@@ -1,14 +1,22 @@
 from fastapi import APIRouter, File, Form, UploadFile
 
-from app.schemas.food import (
+from app.modules.food.schemas import (
     AnalyzeFoodResponse,
-    FoodValidationFlag,
+    FoodConfirmRequest,
+    FoodConfirmResponse,
+    FoodFeedbackRequest,
+    FoodFeedbackResponse,
     FoodValidationRequest,
     FoodValidationResponse,
-    FoodValidationNutrition,
     SessionResponse,
 )
-from app.services.food_service import analyze_food_image, get_food_session
+from app.modules.food.service import (
+    analyze_food_image,
+    confirm_food,
+    get_food_session,
+    save_food_feedback,
+    validate_food_label,
+)
 
 
 router = APIRouter(prefix="/food", tags=["food"])
@@ -18,8 +26,15 @@ router = APIRouter(prefix="/food", tags=["food"])
 async def analyze_food(
     image: UploadFile = File(...),
     session_id: str | None = Form(default=None),
+    request_id: str | None = Form(default=None),
+    debug: bool = Form(default=False),
 ) -> AnalyzeFoodResponse:
-    return await analyze_food_image(image=image, session_id=session_id)
+    return await analyze_food_image(
+        image=image,
+        session_id=session_id,
+        request_id=request_id,
+        debug=debug,
+    )
 
 
 @router.get("/sessions/{session_id}", response_model=SessionResponse)
@@ -27,54 +42,24 @@ async def read_food_session(session_id: str) -> SessionResponse:
     return get_food_session(session_id)
 
 
+@router.get("/session/{session_id}", response_model=SessionResponse)
+async def read_food_session_alias(session_id: str) -> SessionResponse:
+    return get_food_session(session_id)
+
+
+@router.post("/confirm", response_model=FoodConfirmResponse)
+async def confirm_food_selection(request: FoodConfirmRequest) -> FoodConfirmResponse:
+    return confirm_food(request)
+
+
+@router.post("/{session_id}/feedback", response_model=FoodFeedbackResponse)
+async def add_food_feedback(
+    session_id: str,
+    request: FoodFeedbackRequest,
+) -> FoodFeedbackResponse:
+    return save_food_feedback(session_id, request)
+
+
 @router.post("/validate", response_model=FoodValidationResponse)
-async def validate_food_label(payload: FoodValidationRequest) -> FoodValidationResponse:
-    nutrition = payload.ocrNutrition
-    calories = int(round(float(nutrition.calories or 0)))
-    carbs = float(nutrition.carbs if nutrition.carbs is not None else nutrition.carb or 0)
-    protein = float(nutrition.protein or 0)
-    fat = float(nutrition.fat or 0)
-    sugar = float(nutrition.sugar) if nutrition.sugar is not None else None
-    sodium = float(nutrition.sodium) if nutrition.sodium is not None else None
-
-    text = (payload.rawText or "").lower()
-    has_label_terms = any(term in text for term in ["nutrition", "calories", "protein", "fat", "carb", "năng lượng", "chất đạm"])
-    nutrient_count = sum(1 for value in [calories, carbs, protein, fat] if value > 0)
-    confidence = min(0.95, 0.35 + (0.15 * nutrient_count) + (0.2 if has_label_terms else 0))
-
-    flags: list[FoodValidationFlag] = []
-    alternatives: list[str] = []
-
-    if sugar is not None and sugar >= 10:
-        flags.append(FoodValidationFlag(
-            type="high_sugar",
-            severity="medium",
-            message="Sugar is high; review serving size before adding it to the day."
-        ))
-        alternatives.append("Lower sugar option")
-
-    if calories >= 500:
-        flags.append(FoodValidationFlag(
-            type="high_calorie",
-            severity="medium",
-            message="Calories are high for a single serving."
-        ))
-        alternatives.append("Use a smaller serving")
-
-    normalized_name = payload.fileName.rsplit(".", 1)[0] if payload.fileName else "Scanned food label"
-
-    return FoodValidationResponse(
-        isFoodLabel=has_label_terms or nutrient_count > 0,
-        confidence=confidence,
-        normalizedName=normalized_name,
-        nutrition=FoodValidationNutrition(
-            calories=calories,
-            protein=protein,
-            carbs=carbs,
-            fat=fat,
-            sugar=sugar,
-            sodium=sodium,
-        ),
-        flags=flags,
-        alternatives=alternatives,
-    )
+async def validate_food_label_endpoint(payload: FoodValidationRequest) -> FoodValidationResponse:
+    return validate_food_label(payload)
