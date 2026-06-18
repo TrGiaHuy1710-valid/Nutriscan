@@ -11,9 +11,35 @@
             </div>
             <span>VITALIS AI</span>
         </div>
-        <div class="setting-btn">
+
+        <div class="setting-btn" onclick="openModal()">
             <i class="fa-solid fa-gear"></i>
         </div>
+    </div>
+
+    <!-- POPUP TÀI KHOẢN -->
+    <div id="accountModal" class="modal">
+
+        <div class="modal-content">
+
+            <span class="close-btn" onclick="closeModal()">
+                &times;
+            </span>
+
+            <h2>Tài khoản</h2>
+
+            <a href="/Account/Login" class="modal-btn">
+                <i class="fa-solid fa-right-to-bracket"></i>
+                Đăng nhập
+            </a>
+
+            <a href="/Account/Register" class="modal-btn">
+                <i class="fa-solid fa-user-plus"></i>
+                Đăng ký
+            </a>
+
+        </div>
+
     </div>
 
     <!-- MAIN CIRCLE -->
@@ -83,3 +109,21 @@
     @Html.Partial("_BottomNav")
 
 </div>
+
+<script>
+    function openModal() {
+        document.getElementById("accountModal").style.display = "flex";
+    }
+
+    function closeModal() {
+        document.getElementById("accountModal").style.display = "none";
+    }
+
+    window.onclick = function (event) {
+        const modal = document.getElementById("accountModal");
+
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>

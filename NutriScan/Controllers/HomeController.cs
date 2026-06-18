@@ -26,7 +26,7 @@ namespace NutriScan.Controllers
 
         public IActionResult QRScan()
         {
-           return Redirect("http://localhost:5000");
+           return View();
     }
     }
 }
