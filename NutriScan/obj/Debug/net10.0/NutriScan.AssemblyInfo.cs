@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("NutriScan")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+19e9b5f9c5915d7bf0c200130141028544102b65")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+683b048f99187b0fe0cfc49420e0ac2058323f49")]
 [assembly: System.Reflection.AssemblyProductAttribute("NutriScan")]
 [assembly: System.Reflection.AssemblyTitleAttribute("NutriScan")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
